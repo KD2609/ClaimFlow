@@ -2,7 +2,8 @@ import axios from 'axios';
 
 // Create Axios client; in development Vite proxies /api to http://localhost:8080
 const api = axios.create({
-  baseURL: '',
+  baseURL: import.meta.env.VITE_API_BASE_URL
+    || (import.meta.env.PROD ? 'https://claimflow-4.onrender.com' : ''),
   headers: {
     'Content-Type': 'application/json',
   },

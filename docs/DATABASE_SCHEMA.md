@@ -1,154 +1,71 @@
-# Database Design and Schema Specification
+# Database Schema
 
-## 1. Entity-Relationship Diagram
+The current Spring Data JPA model defines exactly three application tables:
+`users`, `insurance_claims`, and `rpa_execution_logs`. The names below use
+Spring Boot's default physical naming strategy, which converts Java camelCase
+property names to snake_case column names.
 
-```mermaid
-erDiagram
-    USERS ||--o{ CLAIM_PROCESSING_HISTORY : "performs"
-    CUSTOMERS ||--o{ INSURANCE_POLICIES : "holds"
-    CUSTOMERS ||--o{ INSURANCE_CLAIMS : "submits"
-    INSURANCE_POLICIES ||--o{ INSURANCE_CLAIMS : "covers"
-    INSURANCE_CLAIMS ||--o{ CLAIM_DOCUMENTS : "contains"
-    INSURANCE_CLAIMS ||--o{ CLAIM_PROCESSING_HISTORY : "has"
-    INSURANCE_CLAIMS ||--o{ RPA_EXECUTION_LOGS : "processed_by"
-    SIMULATION_CONFIGURATIONS ||--o{ SIMULATION_RESULTS : "generates"
+## `users`
 
-    USERS {
-        bigint id PK
-        varchar username UK
-        varchar password
-        varchar full_name
-        varchar role
-        boolean active
-        timestamp created_at
-    }
+| Column | PostgreSQL type | Constraints |
+|---|---|---|
+| `id` | `BIGSERIAL` | Primary key |
+| `username` | `VARCHAR(50)` | Not null, unique |
+| `password` | `VARCHAR(255)` | Not null; BCrypt hash |
+| `full_name` | `VARCHAR(100)` | Not null |
+| `role` | `VARCHAR(30)` | Not null; `ROLE_ADMIN` or `ROLE_CLAIM_PROCESSOR` |
+| `active` | `BOOLEAN` | Not null |
+| `created_at` | `TIMESTAMP WITHOUT TIME ZONE` | Not null |
 
-    CUSTOMERS {
-        bigint id PK
-        varchar customer_number UK
-        varchar first_name
-        varchar last_name
-        varchar email
-        varchar phone
-        varchar address
-        varchar national_id
-        timestamp created_at
-    }
+`active` and `created_at` are initialized by Java; the entity does not declare
+database defaults for them.
 
-    INSURANCE_POLICIES {
-        bigint id PK
-        varchar policy_number UK
-        bigint customer_id FK
-        varchar policy_type
-        decimal max_coverage
-        decimal deductible
-        varchar status
-        date start_date
-        date end_date
-        timestamp created_at
-    }
+## `insurance_claims`
 
-    INSURANCE_CLAIMS {
-        bigint id PK
-        varchar claim_number UK
-        bigint customer_id FK
-        bigint policy_id FK
-        varchar insurance_type
-        decimal claim_amount
-        decimal eligible_amount
-        varchar status
-        varchar processing_mode
-        decimal fraud_risk_score
-        text fraud_risk_reason
-        text description
-        timestamp submission_date
-        timestamp approved_or_rejected_at
-        decimal total_processing_cost
-        integer total_processing_time_seconds
-        timestamp created_at
-        timestamp updated_at
-    }
+| Column | PostgreSQL type | Constraints |
+|---|---|---|
+| `id` | `BIGSERIAL` | Primary key |
+| `claim_number` | `VARCHAR(50)` | Not null, unique |
+| `customer_name` | `VARCHAR(100)` | Not null |
+| `customer_email` | `VARCHAR(100)` | Nullable |
+| `policy_number` | `VARCHAR(50)` | Not null |
+| `coverage_amount` | `NUMERIC(12,2)` | Nullable |
+| `insurance_type` | `VARCHAR(30)` | Not null; `HEALTH`, `VEHICLE`, `LIFE` |
+| `claim_amount` | `NUMERIC(12,2)` | Not null |
+| `eligible_payout_amount` | `NUMERIC(12,2)` | Nullable |
+| `claim_status` | `VARCHAR(30)` | Not null; `SUBMITTED`, `IN_REVIEW`, `APPROVED`, `REJECTED`, `REQUIRES_MANUAL_REVIEW` |
+| `processing_mode` | `VARCHAR(30)` | Not null; `MANUAL`, `AUTOMATED` |
+| `current_stage` | `VARCHAR(50)` | Nullable; `DOCUMENT_VERIFICATION`, `POLICY_VALIDATION`, `AMOUNT_VERIFICATION`, `FRAUD_DETECTION`, `FINAL_DECISION` |
+| `fraud_risk_score` | `INTEGER` | Nullable |
+| `processing_time_minutes` | `DOUBLE PRECISION` | Nullable |
+| `operational_cost` | `DOUBLE PRECISION` | Nullable |
+| `description` | `TEXT` | Nullable |
+| `attached_documents` | `TEXT` | Nullable |
+| `adjudication_notes` | `TEXT` | Nullable |
+| `submission_date` | `TIMESTAMP WITHOUT TIME ZONE` | Nullable |
+| `processed_date` | `TIMESTAMP WITHOUT TIME ZONE` | Nullable |
 
-    CLAIM_DOCUMENTS {
-        bigint id PK
-        bigint claim_id FK
-        varchar document_type
-        varchar file_name
-        varchar file_url
-        boolean is_verified
-        text verification_notes
-        timestamp uploaded_at
-    }
+## `rpa_execution_logs`
 
-    CLAIM_PROCESSING_HISTORY {
-        bigint id PK
-        bigint claim_id FK
-        varchar stage
-        varchar performer_type
-        varchar performer_name
-        timestamp started_at
-        timestamp completed_at
-        integer duration_seconds
-        decimal cost_incurred
-        varchar action_taken
-        text notes
-    }
+| Column | PostgreSQL type | Constraints |
+|---|---|---|
+| `id` | `BIGSERIAL` | Primary key |
+| `claim_id` | `BIGINT` | Nullable |
+| `claim_number` | `VARCHAR(50)` | Nullable |
+| `bot_id` | `VARCHAR(50)` | Not null |
+| `execution_status` | `VARCHAR(30)` | Not null |
+| `execution_duration_ms` | `DOUBLE PRECISION` | Nullable |
+| `operational_cost` | `DOUBLE PRECISION` | Nullable |
+| `execution_details` | `TEXT` | Nullable |
+| `timestamp` | `TIMESTAMP WITHOUT TIME ZONE` | Nullable |
 
-    RPA_EXECUTION_LOGS {
-        bigint id PK
-        bigint claim_id FK
-        varchar bot_id
-        varchar stage
-        varchar execution_status
-        integer duration_ms
-        text details
-        timestamp executed_at
-    }
+There are no JPA relationships or foreign-key constraints between these
+entities. In particular, `rpa_execution_logs.claim_id` is a plain nullable
+`BIGINT`, not a foreign key.
 
-    SIMULATION_CONFIGURATIONS {
-        bigint id PK
-        varchar name
-        integer num_claims
-        double_precision duration_hours
-        integer num_employees
-        integer num_bots
-        double_precision arrival_rate
-        double_precision employee_hourly_rate
-        double_precision bot_hourly_rate
-        double_precision exception_rate
-        double_precision mean_manual_time_minutes
-        double_precision mean_bot_time_minutes
-        timestamp created_at
-    }
+## Schema changes
 
-    SIMULATION_RESULTS {
-        bigint id PK
-        bigint config_id FK
-        text scenario_a_manual_json
-        text scenario_b_automated_json
-        text comparison_json
-        text roi_json
-        timestamp created_at
-    }
-```
-
-## 2. Table Specifications & Indexes
-
-1. **`users`**:
-   - `id` (BIGSERIAL, PRIMARY KEY)
-   - `username` (VARCHAR(50), NOT NULL, UNIQUE)
-   - `password` (VARCHAR(255), NOT NULL) - BCrypt encrypted
-   - `full_name` (VARCHAR(100), NOT NULL)
-   - `role` (VARCHAR(30), NOT NULL) - `ROLE_ADMIN`, `ROLE_CLAIM_PROCESSOR`
-   - `active` (BOOLEAN, DEFAULT TRUE)
-
-2. **`insurance_claims`**:
-   - Status values: `PENDING`, `UNDER_REVIEW`, `APPROVED`, `REJECTED`, `FLAGGED_FOR_MANUAL`
-   - Processing mode: `MANUAL`, `AUTOMATED`
-   - Insurance types: `HEALTH`, `VEHICLE`, `LIFE`
-   - Indexes on: `claim_number` (UNIQUE), `status`, `insurance_type`, `submission_date`
-
-3. **`claim_processing_history`**:
-   - Performer type: `HUMAN`, `RPA_BOT`
-   - Stage values: `DOCUMENT_VERIFICATION`, `POLICY_VALIDATION`, `AMOUNT_VERIFICATION`, `FRAUD_DETECTION`, `DECISION`
-   - Tracks duration in seconds and labor / execution cost incurred.
+The PostgreSQL profile currently uses Hibernate `ddl-auto=update`; it can add
+missing tables and columns but should not be relied on to safely rename or
+remove columns. Inspect the existing Supabase schema before applying manual
+migrations. Do not drop or recreate these tables to resolve a mismatch.

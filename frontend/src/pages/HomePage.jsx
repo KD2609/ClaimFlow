@@ -924,7 +924,7 @@ const HomePage = () => {
                 <div className="font-mono text-[11px] text-slate-600 space-x-2">
                   <span>User: <strong className="text-slate-800">admin</strong></span>
                   <span>|</span>
-                  <span>Pass: <strong className="text-slate-800">admin123</strong></span>
+                  <span>Pass: <strong className="text-slate-800">123</strong></span>
                 </div>
                 <p className="text-[10px] text-slate-400 mt-1">Full access to Simulation Studio, RPA Console, and Claims Management.</p>
               </div>

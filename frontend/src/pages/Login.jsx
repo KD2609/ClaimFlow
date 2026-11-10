@@ -35,7 +35,7 @@ const Login = () => {
     if (user?.role === 'ROLE_CLAIM_PROCESSOR' || user?.username === 'processor') {
       return 'processor123';
     }
-    return 'admin123';
+    return '123';
   });
 
   const [errorMessage, setErrorMessage] = useState('');
@@ -68,10 +68,10 @@ const Login = () => {
     setErrorMessage('');
     if (userType === 'admin') {
       setUsername('admin');
-      setPassword('admin123');
+      setPassword('123');
       setSelectedRole('Admin');
       // Synchronously switch user session and clear stale previous state
-      await login('admin', 'admin123');
+      await login('admin', '123');
     } else {
       setUsername('processor');
       setPassword('processor123');
@@ -254,7 +254,7 @@ const Login = () => {
                     : 'border-slate-200 bg-slate-50/70 hover:bg-slate-100 text-slate-700'
                 }`}
               >
-                Admin (admin / admin123)
+                Admin (admin / 123)
               </button>
               <button
                 type="button"

@@ -34,7 +34,7 @@ public class DataSeederService implements CommandLineRunner {
 
     private void seedUsers() {
         if (!userRepository.existsByUsername("admin")) {
-            User admin = new User("admin", passwordEncoder.encode("admin123"), "System Administrator", Role.ROLE_ADMIN);
+            User admin = new User("admin", passwordEncoder.encode("123"), "System Administrator", Role.ROLE_ADMIN);
             userRepository.save(admin);
         }
         if (!userRepository.existsByUsername("processor")) {

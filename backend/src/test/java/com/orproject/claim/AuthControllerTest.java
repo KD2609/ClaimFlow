@@ -26,7 +26,7 @@ public class AuthControllerTest {
 
     @Test
     void testAdminLoginSuccess() throws Exception {
-        LoginRequest req = new LoginRequest("admin", "admin123");
+        LoginRequest req = new LoginRequest("admin", "123");
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
