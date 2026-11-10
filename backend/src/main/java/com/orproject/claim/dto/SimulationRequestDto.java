@@ -1,7 +1,5 @@
 package com.orproject.claim.dto;
 
-import java.util.Map;
-
 public class SimulationRequestDto {
     private String name = "Operations Research Comparative Run";
     private Integer numClaims = 250;

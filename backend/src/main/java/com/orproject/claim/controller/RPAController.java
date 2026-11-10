@@ -32,12 +32,19 @@ public class RPAController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/run/{claimId}")
+    @PostMapping({"/run/{claimId}", "/process/{claimId}"})
     public ResponseEntity<RPARunResultDto> executeSingle(
             @PathVariable Long claimId,
-            @RequestParam(defaultValue = "RPA-BOT-01") String botId,
-            @RequestParam(defaultValue = "4.20") Double botHourlyCost) {
-        RPARunResultDto result = rpaExecutionService.processSingleClaim(claimId, botId, botHourlyCost);
+            @RequestParam(required = false) String botId,
+            @RequestParam(required = false) Double botHourlyCost,
+            @RequestBody(required = false) RPABatchRequest body) {
+        String effectiveBotId = (botId != null && !botId.isBlank())
+                ? botId
+                : (body != null && body.getBotId() != null && !body.getBotId().isBlank() ? body.getBotId() : "RPA-BOT-01");
+        Double effectiveHourlyCost = (botHourlyCost != null)
+                ? botHourlyCost
+                : (body != null && body.getBotHourlyCost() != null ? body.getBotHourlyCost() : 4.20);
+        RPARunResultDto result = rpaExecutionService.processSingleClaim(claimId, effectiveBotId, effectiveHourlyCost);
         return ResponseEntity.ok(result);
     }
 
@@ -49,7 +56,7 @@ public class RPAController {
         return ResponseEntity.ok(rpaExecutionService.getExecutionLogs(pageable));
     }
 
-    @GetMapping("/recent-logs")
+    @GetMapping({"/recent-logs", "/logs/recent"})
     public ResponseEntity<List<RPAExecutionLog>> getRecentLogs() {
         return ResponseEntity.ok(rpaExecutionService.getRecentLogs());
     }

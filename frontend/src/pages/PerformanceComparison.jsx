@@ -46,7 +46,7 @@ const PerformanceComparison = () => {
           } catch (e) {}
         }
 
-        const [simRes, expRes] = await Promise.all([
+        const [simRes, expRes] = await Promise.allSettled([
           sim ? Promise.resolve({ data: sim }) : simulationApi.runSimulation({
             numClaims: 250,
             durationHours: 40.0,
@@ -62,8 +62,12 @@ const PerformanceComparison = () => {
           simulationApi.getExperiments(),
         ]);
 
-        setSimulationData(simRes.data);
-        setExperimentsData(expRes.data);
+        if (simRes.status === 'fulfilled') {
+          setSimulationData(simRes.value.data);
+        }
+        if (expRes.status === 'fulfilled') {
+          setExperimentsData(expRes.value.data);
+        }
       } catch (err) {
         console.error('Failed to load performance comparison data:', err);
       } finally {

@@ -180,13 +180,22 @@ const SimulationLab = () => {
         meanBotTimeMinutes: parseFloat(meanBotTimeMinutes),
       };
 
-      const [simRes, expRes] = await Promise.all([
+      const [simRes, expRes] = await Promise.allSettled([
         simulationApi.runSimulation(payload),
         simulationApi.getExperiments(),
       ]);
 
-      setSimulationData(simRes.data);
-      setExperimentsData(expRes.data);
+      if (simRes.status === 'fulfilled') {
+        setSimulationData(simRes.value.data);
+      } else {
+        console.error('Simulation execution failed:', simRes.reason);
+      }
+
+      if (expRes.status === 'fulfilled') {
+        setExperimentsData(expRes.value.data);
+      } else {
+        console.error('Experiments fetch failed:', expRes.reason);
+      }
     } catch (err) {
       console.error('Simulation execution failed:', err);
     } finally {
@@ -780,6 +789,25 @@ const SimulationLab = () => {
               </button>
             </div>
           </div>
+
+          {loading && !experimentsData && (
+            <div className="flex flex-col items-center justify-center py-16 space-y-3">
+              <div className="w-8 h-8 border-2 border-teal-700 border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-xs text-slate-500 font-medium">Running sensitivity analysis experiments...</p>
+            </div>
+          )}
+
+          {!loading && !experimentsData && (
+            <div className="flex flex-col items-center justify-center py-12 text-center space-y-3">
+              <p className="text-xs text-slate-500">Unable to load sensitivity experiments data.</p>
+              <button
+                onClick={executeSimulation}
+                className="px-3 py-1.5 rounded-lg bg-teal-50 text-teal-800 hover:bg-teal-100 text-xs font-semibold transition-colors"
+              >
+                Retry Experiments
+              </button>
+            </div>
+          )}
 
           {/* Experiment 1: Arrival Rate Sensitivity - Legend placed at top to prevent overlap */}
           {activeExp === 'arrival' && experimentsData?.experiment1_arrivalRate && (
