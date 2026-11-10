@@ -116,7 +116,7 @@ c:\Projects\OR_Project\
 ├── frontend\                          # React + Vite + Tailwind Dashboard
 │   ├── src\
 │   │   ├── components\layout\         # Top horizontal Navbar and clean responsive Layout (no sidebar)
-│   │   ├── context\AuthContext.jsx    # Simple session context with demo logins
+│   │   ├── context\AuthContext.jsx    # Client session context
 │   │   ├── pages\                     # Flagship Pages
 │   │   │   ├── HomePage.jsx           # Public showcase landing page (Features, OR Overview, How It Works)
 │   │   │   ├── Dashboard.jsx          # Live KPI summary cards & queue status charts (/dashboard)
@@ -124,7 +124,7 @@ c:\Projects\OR_Project\
 │   │   │   ├── ManualProcessing.jsx   # 5-stage interactive manual adjuster workbench
 │   │   │   ├── AutomatedProcessing.jsx# RPA bot execution console & terminal output
 │   │   │   ├── SimulationLab.jsx      # Flagship unified OR lab (Studio, Charts, Sensitivity, ROI)
-│   │   │   └── Login.jsx              # Simple demo login screen with 1-click presets
+│   │   │   └── Login.jsx              # Login screen with username shortcuts
 │   │   └── services\api.js            # Clean Axios REST client
 │   ├── package.json
 │   └── vite.config.js
@@ -231,16 +231,16 @@ To stop services cleanly on Windows:
 
 ---
 
-## 6. Demo Login Credentials & Pre-Seeded Data
+## 6. Account Setup & Pre-Seeded Data
 
 The application automatically seeds **60 realistic insurance claims** across Health, Vehicle, and Life portfolios on startup:
 
 | Role | Username | Password | Capabilities |
 |---|---|---|---|
-| **Administrator** | `admin` | `admin123` | Full access to Simulation Studio, RPA Bot execution, Audit logs, and Claims Management |
-| **Claim Adjuster** | `processor` | `processor123` | Access to 5-Stage Manual Workbench, Claim Intake, and Dossier Inspection |
+| **Administrator** | `admin` | Set through `CLAIMFLOW_ADMIN_PASSWORD` when bootstrapping | Full access to Simulation Studio, RPA Bot execution, Audit logs, and Claims Management |
+| **Claim Adjuster** | `processor` | Set through `CLAIMFLOW_PROCESSOR_PASSWORD` when bootstrapping | Access to 5-Stage Manual Workbench, Claim Intake, and Dossier Inspection |
 
-*(The login screen also provides 1-click demographic fill buttons for instant testing!)*
+*(The login screen can fill a username; passwords are never embedded in the frontend.)*
 
 ---
 

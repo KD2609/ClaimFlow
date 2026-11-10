@@ -13,6 +13,9 @@ public class DashboardStatsDto {
     private int automatedProcessedCount;
     private double manualOperationalCost;
     private double automatedOperationalCost;
+    private int healthClaims;
+    private int vehicleClaims;
+    private int lifeClaims;
 
     public DashboardStatsDto() {}
 
@@ -48,4 +51,11 @@ public class DashboardStatsDto {
 
     public double getAutomatedOperationalCost() { return automatedOperationalCost; }
     public void setAutomatedOperationalCost(double automatedOperationalCost) { this.automatedOperationalCost = automatedOperationalCost; }
+
+    public int getHealthClaims() { return healthClaims; }
+    public void setHealthClaims(int healthClaims) { this.healthClaims = healthClaims; }
+    public int getVehicleClaims() { return vehicleClaims; }
+    public void setVehicleClaims(int vehicleClaims) { this.vehicleClaims = vehicleClaims; }
+    public int getLifeClaims() { return lifeClaims; }
+    public void setLifeClaims(int lifeClaims) { this.lifeClaims = lifeClaims; }
 }

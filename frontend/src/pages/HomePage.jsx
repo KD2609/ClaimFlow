@@ -821,7 +821,7 @@ const HomePage = () => {
             Explore the ClaimFlow Operations Research Platform
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto leading-relaxed">
-            Sign in with demo credentials to test the interactive claims registry, manual adjuster workbench, RPA console, and SimPy simulation studio.
+            Sign in with an account configured for your deployment to explore the claims registry, manual adjuster workbench, RPA console, and SimPy simulation studio.
           </p>
           <div className="pt-2 flex justify-center items-center gap-3">
             <Link
@@ -921,11 +921,7 @@ const HomePage = () => {
                   <span className="font-bold text-slate-800">Administrator Role</span>
                   <span className="text-[10px] bg-teal-50 text-teal-800 border border-teal-200 px-1.5 py-0.2 rounded font-semibold">Full Access</span>
                 </div>
-                <div className="font-mono text-[11px] text-slate-600 space-x-2">
-                  <span>User: <strong className="text-slate-800">admin</strong></span>
-                  <span>|</span>
-                  <span>Pass: <strong className="text-slate-800">123</strong></span>
-                </div>
+                <div className="font-mono text-[11px] text-slate-600">User: <strong className="text-slate-800">admin</strong></div>
                 <p className="text-[10px] text-slate-400 mt-1">Full access to Simulation Studio, RPA Console, and Claims Management.</p>
               </div>
 
@@ -934,11 +930,7 @@ const HomePage = () => {
                   <span className="font-bold text-slate-800">Claims Adjuster Role</span>
                   <span className="text-[10px] bg-slate-100 text-slate-700 border border-slate-200 px-1.5 py-0.2 rounded font-semibold">Adjuster</span>
                 </div>
-                <div className="font-mono text-[11px] text-slate-600 space-x-2">
-                  <span>User: <strong className="text-slate-800">processor</strong></span>
-                  <span>|</span>
-                  <span>Pass: <strong className="text-slate-800">processor123</strong></span>
-                </div>
+                <div className="font-mono text-[11px] text-slate-600">User: <strong className="text-slate-800">processor</strong></div>
                 <p className="text-[10px] text-slate-400 mt-1">Access to 5-stage Manual Adjudication Workbench and Dossier.</p>
               </div>
             </div>

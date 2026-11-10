@@ -5,7 +5,10 @@ import com.orproject.claim.repository.InsuranceClaimRepository;
 import com.orproject.claim.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -13,10 +16,15 @@ import java.util.Random;
 
 @Service
 public class DataSeederService implements CommandLineRunner {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataSeederService.class);
 
     private final UserRepository userRepository;
     private final InsuranceClaimRepository claimRepository;
     private final PasswordEncoder passwordEncoder;
+    @Value("${CLAIMFLOW_ADMIN_PASSWORD:}")
+    private String adminPassword;
+    @Value("${CLAIMFLOW_PROCESSOR_PASSWORD:}")
+    private String processorPassword;
 
     public DataSeederService(UserRepository userRepository,
                              InsuranceClaimRepository claimRepository,
@@ -34,12 +42,20 @@ public class DataSeederService implements CommandLineRunner {
 
     private void seedUsers() {
         if (!userRepository.existsByUsername("admin")) {
-            User admin = new User("admin", passwordEncoder.encode("123"), "System Administrator", Role.ROLE_ADMIN);
-            userRepository.save(admin);
+            if (adminPassword != null && !adminPassword.isBlank()) {
+                User admin = new User("admin", passwordEncoder.encode(adminPassword), "System Administrator", Role.ROLE_ADMIN);
+                userRepository.save(admin);
+            } else {
+                LOGGER.warn("Skipped admin bootstrap because CLAIMFLOW_ADMIN_PASSWORD is not configured");
+            }
         }
         if (!userRepository.existsByUsername("processor")) {
-            User processor = new User("processor", passwordEncoder.encode("processor123"), "Senior Claim Adjuster", Role.ROLE_CLAIM_PROCESSOR);
-            userRepository.save(processor);
+            if (processorPassword != null && !processorPassword.isBlank()) {
+                User processor = new User("processor", passwordEncoder.encode(processorPassword), "Senior Claim Adjuster", Role.ROLE_CLAIM_PROCESSOR);
+                userRepository.save(processor);
+            } else {
+                LOGGER.warn("Skipped processor bootstrap because CLAIMFLOW_PROCESSOR_PASSWORD is not configured");
+            }
         }
     }
 

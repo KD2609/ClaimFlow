@@ -31,12 +31,7 @@ const Login = () => {
     return 'admin';
   });
 
-  const [password, setPassword] = useState(() => {
-    if (user?.role === 'ROLE_CLAIM_PROCESSOR' || user?.username === 'processor') {
-      return 'processor123';
-    }
-    return '123';
-  });
+  const [password, setPassword] = useState('');
 
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -64,21 +59,16 @@ const Login = () => {
     }
   };
 
-  const handleDemoFill = async (userType) => {
+  const handleDemoFill = (userType) => {
     setErrorMessage('');
     if (userType === 'admin') {
       setUsername('admin');
-      setPassword('123');
       setSelectedRole('Admin');
-      // Synchronously switch user session and clear stale previous state
-      await login('admin', '123');
     } else {
       setUsername('processor');
-      setPassword('processor123');
       setSelectedRole('Adjuster');
-      // Synchronously switch user session and clear stale previous state
-      await login('processor', 'processor123');
     }
+    setPassword('');
   };
 
   const handleUsernameChange = (e) => {
@@ -239,10 +229,10 @@ const Login = () => {
             </button>
           </form>
 
-          {/* Quick Demo Login Credentials Bar */}
+          {/* Quick Account Selection */}
           <div className="mt-6 pt-5 border-t border-slate-100">
             <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider text-center mb-2.5">
-              Instant Demo Fill
+              Choose account
             </p>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -254,7 +244,7 @@ const Login = () => {
                     : 'border-slate-200 bg-slate-50/70 hover:bg-slate-100 text-slate-700'
                 }`}
               >
-                Admin (admin / 123)
+                Admin account
               </button>
               <button
                 type="button"
@@ -265,7 +255,7 @@ const Login = () => {
                     : 'border-slate-200 bg-slate-50/70 hover:bg-slate-100 text-slate-700'
                 }`}
               >
-                Adjuster (processor / ...)
+                Adjuster account
               </button>
             </div>
           </div>

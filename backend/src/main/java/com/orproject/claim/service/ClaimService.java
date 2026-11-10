@@ -9,6 +9,7 @@ import com.orproject.claim.model.ProcessingMode;
 import com.orproject.claim.repository.InsuranceClaimRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,7 +28,20 @@ public class ClaimService {
     }
 
     public Page<InsuranceClaim> getClaims(ClaimStatus status, InsuranceType type, String search, Pageable pageable) {
-        return claimRepository.searchClaims(status, type, search, pageable);
+        Specification<InsuranceClaim> specification = (root, query, criteriaBuilder) -> {
+            java.util.List<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
+            if (status != null) predicates.add(criteriaBuilder.equal(root.get("claimStatus"), status));
+            if (type != null) predicates.add(criteriaBuilder.equal(root.get("insuranceType"), type));
+            if (search != null && !search.isBlank()) {
+                String pattern = "%" + search.trim().toLowerCase(java.util.Locale.ROOT) + "%";
+                predicates.add(criteriaBuilder.or(
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("claimNumber")), pattern),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("customerName")), pattern),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("policyNumber")), pattern)));
+            }
+            return criteriaBuilder.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+        };
+        return claimRepository.findAll(specification, pageable);
     }
 
     public InsuranceClaim getClaimById(Long id) {

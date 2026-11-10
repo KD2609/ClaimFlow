@@ -7,6 +7,7 @@ inspection, anomaly fraud detection, and status reconciliation.
 """
 
 import argparse
+import os
 import sys
 import time
 import requests
@@ -15,7 +16,7 @@ from typing import Dict, Any, List, Optional
 
 DEFAULT_BACKEND_URL = "http://localhost:8080"
 DEFAULT_USERNAME = "admin"
-DEFAULT_PASSWORD = "admin123"
+DEFAULT_PASSWORD = os.environ.get("CLAIMFLOW_ADMIN_PASSWORD", "")
 DEFAULT_BOT_ID = "RPA-ROBOT-01"
 DEFAULT_BOT_HOURLY_COST = 4.20  # $/hr bot operational cost
 
@@ -35,14 +36,14 @@ class RPAClaimWorker:
         self.bot_id = bot_id
         self.bot_hourly_cost = bot_hourly_cost
         self.session = requests.Session()
-        self.jwt_token: Optional[str] = None
+        self.session_token: Optional[str] = None
 
     def log(self, message: str, level: str = "INFO"):
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         print(f"[{now}] [{self.bot_id}] [{level}] {message}")
 
     def authenticate(self) -> bool:
-        """Authenticates with the Spring Boot backend to retrieve a JWT Bearer token."""
+        """Authenticates with the Spring Boot backend and stores its bearer session token."""
         url = f"{self.base_url}/api/auth/login"
         self.log(f"Authenticating worker credentials ({self.username}) against {url}...")
         try:
@@ -53,12 +54,12 @@ class RPAClaimWorker:
 
             if resp.status_code == 200:
                 data = resp.json()
-                self.jwt_token = data.get("token")
+                self.session_token = data.get("token")
                 self.session.headers.update({
-                    "Authorization": f"Bearer {self.jwt_token}",
+                    "Authorization": f"Bearer {self.session_token}",
                     "Content-Type": "application/json"
                 })
-                self.log(f"Authentication successful. Bearer JWT acquired (Role: {data.get('role')}).")
+                self.log(f"Authentication successful. Bearer session token acquired (Role: {data.get('role')}).")
                 return True
             else:
                 self.log(f"Authentication failed: HTTP {resp.status_code} - {resp.text}", level="ERROR")
@@ -168,6 +169,9 @@ def main():
     parser.add_argument("--interval", type=int, default=10, help="Polling interval in seconds for continuous mode")
 
     args = parser.parse_args()
+
+    if not args.password:
+        parser.error("Provide --password or set CLAIMFLOW_ADMIN_PASSWORD in the environment")
 
     worker = RPAClaimWorker(
         base_url=args.url,

@@ -3,6 +3,7 @@ package com.orproject.claim.controller;
 import com.orproject.claim.dto.AuthResponse;
 import com.orproject.claim.dto.LoginRequest;
 import com.orproject.claim.model.User;
+import com.orproject.claim.security.JwtService;
 import com.orproject.claim.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,10 +18,12 @@ public class AuthController {
 
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    public AuthController(UserService userService, PasswordEncoder passwordEncoder) {
+    public AuthController(UserService userService, PasswordEncoder passwordEncoder, JwtService jwtService) {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     @PostMapping("/login")
@@ -32,14 +35,14 @@ public class AuthController {
         }
 
         User user = userService.findByUsername(request.getUsername()).get();
-        String demoToken = "demo-session-token-" + user.getUsername() + "-" + System.currentTimeMillis();
+        String token = jwtService.generateToken(user);
 
         AuthResponse response = new AuthResponse(
                 user.getId(),
                 user.getUsername(),
                 user.getFullName(),
                 user.getRole(),
-                demoToken
+                token
         );
         return ResponseEntity.ok(response);
     }

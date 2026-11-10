@@ -75,12 +75,14 @@ const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [recentClaims, setRecentClaims] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [rpaBatchLoading, setRpaBatchLoading] = useState(false);
   const [rpaSuccessMsg, setRpaSuccessMsg] = useState('');
 
   const fetchData = async () => {
     try {
       setLoading(true);
+      setLoadError('');
       const [statsRes, claimsRes] = await Promise.all([
         dashboardApi.getStats(),
         claimApi.getClaims({ page: 0, size: 8 }),
@@ -89,6 +91,8 @@ const Dashboard = () => {
       setRecentClaims(claimsRes.data.content || []);
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
+      setRecentClaims([]);
+      setLoadError(err.response?.data?.message || 'Could not load dashboard data. Check the API connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -124,13 +128,13 @@ const Dashboard = () => {
   }
 
   // Fallbacks if stats not yet populated
-  const totalClaims = stats?.totalClaims ?? 60;
-  const pendingClaims = stats?.pendingClaims ?? 18;
-  const inProgressClaims = stats?.inProgressClaims ?? 8;
-  const approvedClaims = stats?.approvedClaims ?? 26;
-  const rejectedClaims = stats?.rejectedClaims ?? 8;
-  const avgProcessingTime = stats?.averageProcessingTimeMinutes ?? 18.4;
-  const totalCost = stats?.totalOperationalCost ?? 4820.50;
+  const totalClaims = stats?.totalClaims ?? 0;
+  const pendingClaims = stats?.pendingClaims ?? 0;
+  const inProgressClaims = stats?.inProgressClaims ?? 0;
+  const approvedClaims = stats?.approvedClaims ?? 0;
+  const rejectedClaims = stats?.rejectedClaims ?? 0;
+  const avgProcessingTime = stats?.averageProcessingTimeMinutes ?? 0;
+  const totalCost = stats?.totalOperationalCost ?? 0;
 
   // Prepare chart data
   const statusPieData = [
@@ -143,20 +147,20 @@ const Dashboard = () => {
   const modeBarData = [
     {
       name: 'Manual Processing',
-      claims: stats?.manualProcessedCount ?? 42,
-      cost: Math.round(stats?.manualOperationalCost ?? 3840),
+      claims: stats?.manualProcessedCount ?? 0,
+      cost: Math.round(stats?.manualOperationalCost ?? 0),
     },
     {
       name: 'RPA Automated',
-      claims: stats?.automatedProcessedCount ?? 18,
-      cost: Math.round(stats?.automatedOperationalCost ?? 980),
+      claims: stats?.automatedProcessedCount ?? 0,
+      cost: Math.round(stats?.automatedOperationalCost ?? 0),
     },
   ];
 
   const typeData = [
-    { name: 'Health', claims: 28 },
-    { name: 'Vehicle', claims: 20 },
-    { name: 'Life', claims: 12 },
+    { name: 'Health', claims: stats?.healthClaims ?? 0 },
+    { name: 'Vehicle', claims: stats?.vehicleClaims ?? 0 },
+    { name: 'Life', claims: stats?.lifeClaims ?? 0 },
   ];
 
   return (
@@ -189,6 +193,8 @@ const Dashboard = () => {
           </Link>
         </div>
       </div>
+
+      {loadError && <div role="alert" className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs">{loadError}</div>}
 
       {rpaSuccessMsg && (
         <div className="p-4 rounded-xl bg-teal-50 border border-teal-200 text-teal-800 text-xs font-medium flex items-center justify-between">
@@ -390,7 +396,9 @@ const Dashboard = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {recentClaims.slice(0, 6).map((c) => (
+              {recentClaims.length === 0 ? (
+                <tr><td colSpan="7" className="py-10 text-center text-slate-400">{loadError ? 'Claims could not be loaded.' : 'No claims available yet.'}</td></tr>
+              ) : recentClaims.slice(0, 6).map((c) => (
                 <tr key={c.id} className="hover:bg-slate-50/80 transition-colors">
                   <td className="py-3 px-6 font-mono font-semibold text-slate-800">
                     {c.claimNumber}

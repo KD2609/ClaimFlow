@@ -44,7 +44,7 @@ python rpa_worker.py --mode continuous --interval 10
 #### Command-Line Arguments
 - `--url`: Backend API URL (default: `http://localhost:8080`)
 - `--user`: Username (default: `admin`)
-- `--password`: Password (default: `admin123`)
+- `--password`: Password (or set `CLAIMFLOW_ADMIN_PASSWORD` in the environment)
 - `--bot-id`: Custom identifier (e.g. `RPA-BOT-ALPHA`)
 - `--batch-size`: Number of claims to intake per batch
 

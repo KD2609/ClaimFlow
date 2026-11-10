@@ -34,6 +34,10 @@ const ManualProcessing = () => {
   const [claim, setClaim] = useState(null);
   const [claimHistory, setClaimHistory] = useState([]);
   const [pendingClaimsList, setPendingClaimsList] = useState([]);
+  const [claimsLoadError, setClaimsLoadError] = useState('');
+  const [claimLoadError, setClaimLoadError] = useState('');
+  const [loadingClaims, setLoadingClaims] = useState(true);
+  const [loadingClaim, setLoadingClaim] = useState(false);
   const [selectedClaimId, setSelectedClaimId] = useState(claimIdParam || '');
   const [activeStageIndex, setActiveStageIndex] = useState(0);
 
@@ -55,7 +59,9 @@ const ManualProcessing = () => {
   useEffect(() => {
     const loadEligibleClaims = async () => {
       try {
-        const res = await claimApi.getClaims({ size: 30 });
+        setLoadingClaims(true);
+        setClaimsLoadError('');
+        const res = await claimApi.getClaims({ size: 100 });
         const eligible = (res.data.content || []).filter(
           (c) => c.claimStatus === 'SUBMITTED' || c.claimStatus === 'IN_REVIEW' || c.claimStatus === 'REQUIRES_MANUAL_REVIEW'
         );
@@ -65,6 +71,10 @@ const ManualProcessing = () => {
         }
       } catch (e) {
         console.error('Error fetching eligible claims:', e);
+        setPendingClaimsList([]);
+        setClaimsLoadError(e.response?.data?.message || 'Could not load eligible claims. Check the API connection and try again.');
+      } finally {
+        setLoadingClaims(false);
       }
     };
     loadEligibleClaims();
@@ -72,10 +82,16 @@ const ManualProcessing = () => {
 
   // Load selected claim data
   useEffect(() => {
-    if (!selectedClaimId) return;
+    if (!selectedClaimId) {
+      setClaim(null);
+      setLoadingClaim(false);
+      return;
+    }
 
     const loadClaimDetails = async () => {
       try {
+        setLoadingClaim(true);
+        setClaimLoadError('');
         const res = await claimApi.getClaimById(selectedClaimId);
         setClaim(res.data);
         setApprovedAmount(res.data.eligiblePayoutAmount || res.data.claimAmount);
@@ -91,6 +107,10 @@ const ManualProcessing = () => {
         setIsTimerRunning(true);
       } catch (e) {
         console.error('Error loading claim:', e);
+        setClaim(null);
+        setClaimLoadError(e.response?.data?.message || 'Could not load the selected claim. Please select it again or retry.');
+      } finally {
+        setLoadingClaim(false);
       }
     };
 
@@ -191,6 +211,7 @@ const ManualProcessing = () => {
           <select
             value={selectedClaimId}
             onChange={(e) => setSelectedClaimId(e.target.value)}
+            disabled={loadingClaims || pendingClaimsList.length === 0}
             className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-medium focus:ring-2 focus:ring-teal-600 focus:outline-none shadow-sm"
           >
             {pendingClaimsList.map((c) => (
@@ -198,9 +219,12 @@ const ManualProcessing = () => {
                 {c.claimNumber} - {c.customerName} (${c.claimAmount?.toLocaleString()})
               </option>
             ))}
+            {pendingClaimsList.length === 0 && <option value="">{loadingClaims ? 'Loading claims...' : claimsLoadError ? 'Claims unavailable' : 'No eligible claims'}</option>}
           </select>
         </div>
       </div>
+
+      {claimsLoadError && <div role="alert" className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs">{claimsLoadError}</div>}
 
       {feedbackMsg && (
         <div className="p-4 rounded-xl bg-teal-50 border border-teal-200 text-teal-800 text-xs font-medium flex items-center justify-between">
@@ -212,7 +236,12 @@ const ManualProcessing = () => {
         </div>
       )}
 
-      {claim ? (
+      {loadingClaim || (loadingClaims && !selectedClaimId) ? (
+        <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center text-slate-500">
+          <Clock className="w-8 h-8 mx-auto mb-2 text-teal-600 animate-pulse" />
+          <p className="text-sm font-semibold">Loading claim details...</p>
+        </div>
+      ) : claim ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column: Claim Overview & Labor Stopwatch */}
           <div className="space-y-6">
@@ -509,9 +538,9 @@ const ManualProcessing = () => {
         </div>
       ) : (
         <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center text-slate-400">
-          <Clock className="w-10 h-10 mx-auto mb-2 text-slate-300 animate-pulse" />
-          <p className="text-sm font-semibold">No active claim selected for manual processing.</p>
-          <p className="text-xs mt-1">Select an incoming claim from the dropdown above to begin.</p>
+          {claimLoadError ? <AlertTriangle className="w-10 h-10 mx-auto mb-2 text-rose-400" /> : <Clock className="w-10 h-10 mx-auto mb-2 text-slate-300" />}
+          <p className="text-sm font-semibold">{claimLoadError || 'No active claim selected for manual processing.'}</p>
+          <p className="text-xs mt-1">{claimLoadError ? 'Please retry after the API is available.' : 'Select an incoming claim from the dropdown above to begin.'}</p>
         </div>
       )}
     </div>

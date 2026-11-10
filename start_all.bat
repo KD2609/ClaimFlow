@@ -23,9 +23,7 @@ echo   Frontend Dashboard: http://localhost:5173
 echo   Spring Boot API:    http://localhost:8080/api/dashboard/stats
 echo   Python SimPy API:   http://localhost:8000/docs
 echo.
-echo   Demo Login Credentials:
-echo     Admin:     admin / admin123
-echo     Adjuster:  processor / processor123
+echo   Login: Use the admin or processor password configured for this environment.
 echo ================================================================================
 timeout /t 5 >nul
 start http://localhost:5173

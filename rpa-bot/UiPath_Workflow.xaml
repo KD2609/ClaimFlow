@@ -38,13 +38,13 @@
                      Message="[&quot;[UiPath RPA] Authenticating with Spring Boot Claim API at &quot; + BaseUrl]" />
       <!-- UiPath HTTP Request activity representation -->
       <ui:Comment DisplayName="API Auth Request" 
-                  Text="POST /api/auth/login with credentials {username: 'admin', password: 'admin123'}. Save JWT to AuthToken." />
-      <Assign DisplayName="Assign Mock Auth Token" sap:VirtualizedContainerService.HintSize="334,60">
+                  Text="POST /api/auth/login with credentials supplied from UiPath Orchestrator secure assets. Do not store passwords in the workflow." />
+      <Assign DisplayName="Assign Mock Bearer Token" sap:VirtualizedContainerService.HintSize="334,60">
         <Assign.To>
           <OutArgument x:TypeArguments="x:String">[AuthToken]</OutArgument>
         </Assign.To>
         <Assign.Value>
-          <InArgument x:TypeArguments="x:String">["BEARER_JWT_SIMULATED_TOKEN"]</InArgument>
+          <InArgument x:TypeArguments="x:String">["BEARER_SESSION_TOKEN_SIMULATED"]</InArgument>
         </Assign.Value>
       </Assign>
     </Sequence>

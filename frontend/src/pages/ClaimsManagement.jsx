@@ -44,6 +44,7 @@ const ClaimsManagement = () => {
   const [typeFilter, setTypeFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
   // Modal state for New Claim
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -66,6 +67,7 @@ const ClaimsManagement = () => {
   const fetchClaims = async () => {
     try {
       setLoading(true);
+      setLoadError('');
       const params = {
         page,
         size: pageSize,
@@ -85,6 +87,9 @@ const ClaimsManagement = () => {
       }
     } catch (err) {
       console.error('Failed to fetch claims:', err);
+      setClaims([]);
+      setTotalElements(0);
+      setLoadError(err.response?.data?.message || 'Could not load claims. Check the API connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -295,6 +300,10 @@ const ClaimsManagement = () => {
                     <div className="w-7 h-7 border-2 border-teal-700 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
                     Loading claims pipeline...
                   </td>
+                </tr>
+              ) : loadError ? (
+                <tr>
+                  <td colSpan="10" className="py-12 text-center text-rose-600 font-medium">{loadError}</td>
                 </tr>
               ) : claims.length === 0 ? (
                 <tr>

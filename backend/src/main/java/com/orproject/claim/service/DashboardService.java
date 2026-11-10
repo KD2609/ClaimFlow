@@ -2,6 +2,8 @@ package com.orproject.claim.service;
 
 import com.orproject.claim.dto.DashboardStatsDto;
 import com.orproject.claim.model.ClaimStatus;
+import com.orproject.claim.model.ProcessingMode;
+import com.orproject.claim.model.InsuranceType;
 import com.orproject.claim.repository.InsuranceClaimRepository;
 import org.springframework.stereotype.Service;
 
@@ -31,14 +33,17 @@ public class DashboardService {
         dto.setInProgressClaims((int) inReview);
         dto.setApprovedClaims((int) approved);
         dto.setRejectedClaims((int) rejected);
-        dto.setAverageProcessingTimeMinutes(avgTime != null ? avgTime : 18.4);
-        dto.setTotalOperationalCost(totalCost != null ? totalCost : 4820.50);
+        dto.setHealthClaims((int) claimRepository.countByInsuranceType(InsuranceType.HEALTH));
+        dto.setVehicleClaims((int) claimRepository.countByInsuranceType(InsuranceType.VEHICLE));
+        dto.setLifeClaims((int) claimRepository.countByInsuranceType(InsuranceType.LIFE));
+        dto.setAverageProcessingTimeMinutes(avgTime != null ? avgTime : 0.0);
+        dto.setTotalOperationalCost(totalCost != null ? totalCost : 0.0);
 
         // Breakdowns for Dashboard charts
-        dto.setManualProcessedCount((int) (total * 0.60));
-        dto.setAutomatedProcessedCount((int) (total * 0.40));
-        dto.setManualOperationalCost(dto.getTotalOperationalCost() * 0.82);
-        dto.setAutomatedOperationalCost(dto.getTotalOperationalCost() * 0.18);
+        dto.setManualProcessedCount((int) claimRepository.countByProcessingMode(ProcessingMode.MANUAL));
+        dto.setAutomatedProcessedCount((int) claimRepository.countByProcessingMode(ProcessingMode.AUTOMATED));
+        dto.setManualOperationalCost(claimRepository.getOperationalCostByProcessingMode(ProcessingMode.MANUAL));
+        dto.setAutomatedOperationalCost(claimRepository.getOperationalCostByProcessingMode(ProcessingMode.AUTOMATED));
 
         return dto;
     }
