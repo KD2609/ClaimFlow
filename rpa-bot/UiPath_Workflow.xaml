@@ -1,0 +1,104 @@
+<Activity mc:Ignorable="sap sap2010 sads" x:Class="InsuranceClaimAutomationFlow"
+ xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
+ xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+ xmlns:mva="clr-namespace:Microsoft.VisualBasic.Activities;assembly=System.Activities"
+ xmlns:s="clr-namespace:System;assembly=mscorlib"
+ xmlns:sads="http://schemas.microsoft.com/netfx/2010/xaml/activities/debugger"
+ xmlns:sap="http://schemas.microsoft.com/netfx/2009/xaml/activities/presentation"
+ xmlns:sap2010="http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation"
+ xmlns:scg="clr-namespace:System.Collections.Generic;assembly=mscorlib"
+ xmlns:ui="http://schemas.uipath.com/workflow/activities"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <x:Members>
+    <x:Property Name="in_BaseUrl" Type="InArgument(x:String)" />
+    <x:Property Name="in_BotId" Type="InArgument(x:String)" />
+    <x:Property Name="out_ProcessedCount" Type="OutArgument(x:Int32)" />
+  </x:Members>
+  <mva:VisualBasic.Settings>
+    <x:Null />
+  </mva:VisualBasic.Settings>
+  <sap2010:Annotation.AnnotationText>
+    Insurance Claim Processing Automation: UiPath RPA Workflow
+    Course Project: Operations Research - Automation vs. Manual Analysis
+    Author: Operations Research Automation Team
+  </sap2010:Annotation.AnnotationText>
+  <Sequence DisplayName="Main RPA Workflow Sequence" sap:VirtualizedContainerService.HintSize="636,1920">
+    <Sequence.Variables>
+      <Variable x:TypeArguments="x:String" Default="http://localhost:8080" Name="BaseUrl" />
+      <Variable x:TypeArguments="x:String" Default="RPA-UIPATH-BOT-01" Name="BotId" />
+      <Variable x:TypeArguments="x:String" Name="AuthToken" />
+      <Variable x:TypeArguments="x:String" Name="ClaimsResponseJson" />
+      <Variable x:TypeArguments="x:Int32" Default="0" Name="ProcessedCounter" />
+      <Variable x:TypeArguments="x:Double" Default="4.20" Name="BotHourlyCost" />
+    </Sequence.Variables>
+
+    <!-- Stage 1: Authentication -->
+    <Sequence DisplayName="1. Authentication &amp; Token Acquisition" sap:VirtualizedContainerService.HintSize="594,320">
+      <ui:LogMessage DisplayName="Log Auth Start" sap:VirtualizedContainerService.HintSize="334,91" Level="Info" 
+                     Message="[&quot;[UiPath RPA] Authenticating with Spring Boot Claim API at &quot; + BaseUrl]" />
+      <!-- UiPath HTTP Request activity representation -->
+      <ui:Comment DisplayName="API Auth Request" 
+                  Text="POST /api/auth/login with credentials {username: 'admin', password: 'admin123'}. Save JWT to AuthToken." />
+      <Assign DisplayName="Assign Mock Auth Token" sap:VirtualizedContainerService.HintSize="334,60">
+        <Assign.To>
+          <OutArgument x:TypeArguments="x:String">[AuthToken]</OutArgument>
+        </Assign.To>
+        <Assign.Value>
+          <InArgument x:TypeArguments="x:String">["BEARER_JWT_SIMULATED_TOKEN"]</InArgument>
+        </Assign.Value>
+      </Assign>
+    </Sequence>
+
+    <!-- Stage 2: Queue Intake -->
+    <Sequence DisplayName="2. Retrieve Pending Claims Queue" sap:VirtualizedContainerService.HintSize="594,300">
+      <ui:LogMessage DisplayName="Log Queue Fetch" sap:VirtualizedContainerService.HintSize="334,91" Level="Info" 
+                     Message="[&quot;[UiPath RPA] Polling pending claims queue (Status = SUBMITTED)...&quot;]" />
+      <ui:Comment DisplayName="GET Claims API" 
+                  Text="GET /api/claims?status=SUBMITTED&amp;size=20 with Authorization: Bearer {AuthToken}." />
+    </Sequence>
+
+    <!-- Stage 3: Automated Processing Engine Loop -->
+    <Sequence DisplayName="3. Automated Claim Decisioning Pipeline" sap:VirtualizedContainerService.HintSize="594,920">
+      <ui:LogMessage DisplayName="Log Pipeline Execution" sap:VirtualizedContainerService.HintSize="552,91" Level="Info" 
+                     Message="[&quot;[UiPath RPA] Executing RPA rule engine: OCR check, policy verification, fraud scoring...&quot;]" />
+
+      <!-- Step 3a: Trigger Batch via Backend RPA Controller -->
+      <ui:Comment DisplayName="Execute Batch" 
+                  Text="POST /api/rpa/batch with payload {limit: 15, botId: BotId, botHourlyCost: BotHourlyCost}." />
+
+      <!-- Step 3b: Decision Branching Rules -->
+      <If Condition="True" DisplayName="Verify Document Completeness and Fraud Score &lt;= 65" sap:VirtualizedContainerService.HintSize="552,500">
+        <If.Then>
+          <Sequence DisplayName="Straight-Through Processing (STP)" sap:VirtualizedContainerService.HintSize="272,340">
+            <ui:LogMessage DisplayName="Log STP Approval" sap:VirtualizedContainerService.HintSize="230,91" Level="Info" 
+                           Message="[&quot;[UiPath RPA] All criteria met. Claim APPROVED automatically via STP.&quot;]" />
+            <Assign DisplayName="Increment Processed Count" sap:VirtualizedContainerService.HintSize="230,60">
+              <Assign.To>
+                <OutArgument x:TypeArguments="x:Int32">[ProcessedCounter]</OutArgument>
+              </Assign.To>
+              <Assign.Value>
+                <InArgument x:TypeArguments="x:Int32">[ProcessedCounter + 1]</InArgument>
+              </Assign.Value>
+            </Assign>
+          </Sequence>
+        </If.Then>
+        <If.Else>
+          <Sequence DisplayName="Exception Handling / Manual Escalation" sap:VirtualizedContainerService.HintSize="272,340">
+            <ui:LogMessage DisplayName="Log Exception Escalation" sap:VirtualizedContainerService.HintSize="230,91" Level="Warn" 
+                           Message="[&quot;[UiPath RPA] Anomaly or missing document detected. Routing to human processor.&quot;]" />
+            <ui:Comment DisplayName="Escalate to Human Queue" 
+                        Text="Sets claim status to REQUIRES_MANUAL_REVIEW and dispatches alert notification." />
+          </Sequence>
+        </If.Else>
+      </If>
+    </Sequence>
+
+    <!-- Stage 4: Audit Log Persistence -->
+    <Sequence DisplayName="4. Audit Trail &amp; Performance Telemetry" sap:VirtualizedContainerService.HintSize="594,200">
+      <ui:LogMessage DisplayName="Log Completion" sap:VirtualizedContainerService.HintSize="334,91" Level="Info" 
+                     Message="[&quot;[UiPath RPA] Automation cycle finished. Telemetry logs persisted to database.&quot;]" />
+    </Sequence>
+
+  </Sequence>
+</Activity>
+

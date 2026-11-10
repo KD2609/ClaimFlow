@@ -1,0 +1,4 @@
+com\orproject\claim\AuthControllerTest.class
+com\orproject\claim\RPAExecutionServiceTest.class
+com\orproject\claim\ClaimServiceTest.class
+com\orproject\claim\SimulationServiceTest.class
