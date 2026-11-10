@@ -48,16 +48,14 @@ export const manualProcessingApi = {
 // RPA Bot Endpoints
 export const rpaApi = {
   executeBatch: (batchData = {}) => api.post('/api/rpa/batch', batchData),
-  executeSingle: (claimId, params = {}) => api.post(`/api/rpa/run/${claimId}`, null, { params }),
-  getLogs: (params = {}) => api.get('/api/rpa/logs', { params }),
-  getRecentLogs: () => api.get('/api/rpa/recent-logs'),
+  executeSingle: (claimId, botData = {}) => api.post(`/api/rpa/process/${claimId}`, botData),
+  getRecentLogs: () => api.get('/api/rpa/logs/recent'),
 };
 
-// Operations Research Simulation Endpoints
+// Simulation Endpoints (Communicates through Spring Boot proxy to Python SimPy service)
 export const simulationApi = {
   runSimulation: (config) => api.post('/api/simulation/run', config),
-  getExperiments: () => api.get('/api/simulation/experiments'),
-  getEngineStatus: () => api.get('/api/simulation/engine-status'),
+  runExperiments: (params = {}) => api.get('/api/simulation/experiments', { params }),
 };
 
 export default api;

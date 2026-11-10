@@ -6,6 +6,7 @@ import Layout from './components/layout/Layout';
 // Pages
 import HomePage from './pages/HomePage';
 import Login from './pages/Login';
+import SignUp from './pages/SignUp';
 import Dashboard from './pages/Dashboard';
 import ClaimsManagement from './pages/ClaimsManagement';
 import ManualProcessing from './pages/ManualProcessing';
@@ -28,8 +29,9 @@ function App() {
           {/* Public Home Page: Open to all visitors without requiring login */}
           <Route path="/" element={<HomePage />} />
 
-          {/* Public Login Route */}
+          {/* Public Login & Sign Up Routes */}
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
 
           {/* Authenticated Application Shell (ClaimFlow Console) */}
           <Route

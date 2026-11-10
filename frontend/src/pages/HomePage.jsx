@@ -137,28 +137,26 @@ const HomePage = () => {
             </nav>
 
             {/* Right: Auth Action Buttons */}
-            <div className="hidden sm:flex items-center space-x-2.5">
-              {isAuthenticated && (
-                <Link
-                  to="/dashboard"
-                  className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white text-xs font-semibold shadow-xs transition-all mr-1"
-                >
-                  <span>Open Dashboard</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              )}
+            <div className="hidden sm:flex items-center space-x-2 lg:space-x-2.5">
               <Link
                 to="/login"
-                className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-700 hover:text-teal-800 hover:bg-teal-50/60 border border-slate-200/90 bg-white transition-all shadow-xs"
+                className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white text-xs font-semibold shadow-xs transition-all whitespace-nowrap"
+              >
+                <span>Open Dashboard</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+              <Link
+                to="/login"
+                className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-700 hover:text-teal-800 hover:bg-teal-50/60 border border-slate-200/90 bg-white transition-all shadow-xs whitespace-nowrap"
               >
                 Login
               </Link>
-              <button
-                onClick={() => setSignUpModalOpen(true)}
-                className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-teal-800 bg-teal-50 border border-teal-200/80 hover:bg-teal-100 transition-all shadow-xs"
+              <Link
+                to="/signup"
+                className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-teal-800 bg-teal-50 border border-teal-200/80 hover:bg-teal-100 transition-all shadow-xs whitespace-nowrap"
               >
                 Sign Up
-              </button>
+              </Link>
             </div>
 
             {/* Mobile Hamburger Toggle */}
@@ -202,32 +200,31 @@ const HomePage = () => {
               How It Works
             </button>
 
-            <div className="pt-3 border-t border-slate-100 flex items-center space-x-2">
-              {isAuthenticated && (
-                <Link
-                  to="/dashboard"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex-1 text-center py-2 px-3 rounded-xl bg-teal-700 text-white text-xs font-semibold"
-                >
-                  Dashboard
-                </Link>
-              )}
+            <div className="pt-3 border-t border-slate-100 space-y-2">
               <Link
                 to="/login"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex-1 text-center py-2 px-3 rounded-xl border border-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-50 bg-white"
+                className="w-full flex items-center justify-center space-x-1.5 py-2 px-3 rounded-xl bg-teal-700 text-white text-xs font-semibold hover:bg-teal-800 transition-all shadow-xs"
               >
-                Login
+                <span>Open Dashboard</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  setSignUpModalOpen(true);
-                }}
-                className="flex-1 py-2 px-3 rounded-xl bg-teal-50 border border-teal-200 text-teal-800 text-xs font-semibold hover:bg-teal-100"
-              >
-                Sign Up
-              </button>
+              <div className="flex items-center space-x-2">
+                <Link
+                  to="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex-1 text-center py-2 px-3 rounded-xl border border-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-50 bg-white"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/signup"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex-1 text-center py-2 px-3 rounded-xl bg-teal-50 border border-teal-200 text-teal-800 text-xs font-semibold hover:bg-teal-100"
+                >
+                  Sign Up
+                </Link>
+              </div>
             </div>
           </div>
         )}
@@ -267,10 +264,10 @@ const HomePage = () => {
               {/* Action Buttons */}
               <div className="pt-2 flex flex-wrap items-center gap-3.5">
                 <Link
-                  to={isAuthenticated ? "/dashboard" : "/login"}
+                  to="/login"
                   className="inline-flex items-center space-x-2 px-6 py-3 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-semibold text-xs sm:text-sm shadow-sm hover:shadow transition-all group"
                 >
-                  <span>Get Started</span>
+                  <span>Open Dashboard</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                 </Link>
 
@@ -828,10 +825,10 @@ const HomePage = () => {
           </p>
           <div className="pt-2 flex justify-center items-center gap-3">
             <Link
-              to={isAuthenticated ? "/dashboard" : "/login"}
+              to="/login"
               className="inline-flex items-center space-x-2 px-6 py-2.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-semibold text-xs sm:text-sm shadow-xs transition-all"
             >
-              <span>{isAuthenticated ? "Go to Dashboard" : "Sign In to Test"}</span>
+              <span>Open Dashboard</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>

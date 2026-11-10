@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -9,23 +9,39 @@ import {
   ArrowRight, 
   FileText, 
   CheckCircle2, 
-  Cpu,
   ArrowLeft
 } from 'lucide-react';
 
 const Login = () => {
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('admin123');
-  const [errorMessage, setErrorMessage] = useState('');
-  const { login, loading, isAuthenticated } = useAuth();
+  const { login, loading, user } = useAuth();
   const navigate = useNavigate();
 
-  // If already authenticated, redirect straight to dashboard
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard');
+  // Initialize from existing session if available, default to admin
+  const [selectedRole, setSelectedRole] = useState(() => {
+    if (user?.role === 'ROLE_CLAIM_PROCESSOR' || user?.username === 'processor') {
+      return 'Adjuster';
     }
-  }, [isAuthenticated, navigate]);
+    return 'Admin';
+  });
+
+  const [username, setUsername] = useState(() => {
+    if (user?.role === 'ROLE_CLAIM_PROCESSOR' || user?.username === 'processor') {
+      return 'processor';
+    }
+    return 'admin';
+  });
+
+  const [password, setPassword] = useState(() => {
+    if (user?.role === 'ROLE_CLAIM_PROCESSOR' || user?.username === 'processor') {
+      return 'processor123';
+    }
+    return 'admin123';
+  });
+
+  const [errorMessage, setErrorMessage] = useState('');
+
+  // Dynamically derive the active display role
+  const activeRole = selectedRole || (username.toLowerCase() === 'processor' ? 'Adjuster' : 'Admin');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -38,15 +54,44 @@ const Login = () => {
     }
   };
 
-  const handleDemoFill = (userType) => {
+  const handleQuickDashboardNav = async () => {
+    // Ensure active credentials are authenticated and clear any stale previous user
+    const res = await login(username, password);
+    if (res.success) {
+      navigate('/dashboard');
+    } else {
+      navigate('/dashboard');
+    }
+  };
+
+  const handleDemoFill = async (userType) => {
+    setErrorMessage('');
     if (userType === 'admin') {
       setUsername('admin');
       setPassword('admin123');
+      setSelectedRole('Admin');
+      // Synchronously switch user session and clear stale previous state
+      await login('admin', 'admin123');
     } else {
       setUsername('processor');
       setPassword('processor123');
+      setSelectedRole('Adjuster');
+      // Synchronously switch user session and clear stale previous state
+      await login('processor', 'processor123');
     }
-    setErrorMessage('');
+  };
+
+  const handleUsernameChange = (e) => {
+    const val = e.target.value;
+    setUsername(val);
+    const lower = val.trim().toLowerCase();
+    if (lower === 'admin') {
+      setSelectedRole('Admin');
+    } else if (lower === 'processor') {
+      setSelectedRole('Adjuster');
+    } else if (val.trim()) {
+      setSelectedRole(val.trim());
+    }
   };
 
   return (
@@ -101,7 +146,7 @@ const Login = () => {
           </p>
         </div>
 
-        {/* Back to Home Navigation Link: Aligned with the left edge of login card, 16-20px above card */}
+        {/* Back to Home Navigation Link */}
         <div className="mb-4 sm:mb-5 flex items-center justify-start">
           <Link
             to="/"
@@ -114,6 +159,24 @@ const Login = () => {
 
         {/* Card Box */}
         <div className="bg-white py-8 px-6 sm:px-8 rounded-2xl border border-slate-200/90 shadow-sm">
+          {/* Active Demo Role Status Box: Dynamically reflects Admin vs Adjuster selection */}
+          <div className="mb-4 p-2.5 rounded-xl bg-teal-50 border border-teal-200/80 text-teal-800 text-xs flex items-center justify-between transition-all">
+            <div className="flex items-center space-x-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="font-medium">
+                Signed in as <strong className="font-bold text-teal-900">{activeRole}</strong>
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleQuickDashboardNav}
+              className="font-semibold text-teal-700 hover:text-teal-900 hover:underline flex items-center space-x-1 transition-colors"
+            >
+              <span>Dashboard</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
           {errorMessage && (
             <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 flex items-center space-x-2 text-rose-700 text-xs">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -134,7 +197,7 @@ const Login = () => {
                   type="text"
                   required
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  onChange={handleUsernameChange}
                   className="block w-full pl-10 pr-3 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-teal-600 focus:outline-none bg-slate-50/50"
                   placeholder="Enter username"
                 />
@@ -185,18 +248,36 @@ const Login = () => {
               <button
                 type="button"
                 onClick={() => handleDemoFill('admin')}
-                className="py-1.5 px-2.5 rounded-lg border border-slate-200 bg-slate-50/70 hover:bg-slate-100 text-[11px] font-medium text-slate-700 transition-colors text-center"
+                className={`py-1.5 px-2.5 rounded-lg border text-[11px] font-medium transition-colors text-center ${
+                  activeRole === 'Admin'
+                    ? 'border-teal-700 bg-teal-50/70 text-teal-800 font-bold'
+                    : 'border-slate-200 bg-slate-50/70 hover:bg-slate-100 text-slate-700'
+                }`}
               >
                 Admin (admin / admin123)
               </button>
               <button
                 type="button"
                 onClick={() => handleDemoFill('processor')}
-                className="py-1.5 px-2.5 rounded-lg border border-slate-200 bg-slate-50/70 hover:bg-slate-100 text-[11px] font-medium text-slate-700 transition-colors text-center"
+                className={`py-1.5 px-2.5 rounded-lg border text-[11px] font-medium transition-colors text-center ${
+                  activeRole === 'Adjuster'
+                    ? 'border-teal-700 bg-teal-50/70 text-teal-800 font-bold'
+                    : 'border-slate-200 bg-slate-50/70 hover:bg-slate-100 text-slate-700'
+                }`}
               >
                 Adjuster (processor / ...)
               </button>
             </div>
+          </div>
+
+          {/* Don't have an account? Sign Up Link */}
+          <div className="mt-5 pt-4 border-t border-slate-100 text-center">
+            <p className="text-xs text-slate-500">
+              Don't have an account?{' '}
+              <Link to="/signup" className="font-semibold text-teal-700 hover:text-teal-800 hover:underline">
+                Sign Up
+              </Link>
+            </p>
           </div>
         </div>
 
