@@ -1,0 +1,29 @@
+# Build outputs
+target/
+*.jar
+*.war
+*.class
+
+# Version control & IDE
+.git/
+.gitignore
+.idea/
+*.iml
+.vscode/
+
+# Environment files and credentials
+.env
+.env.*
+*.env
+
+# Logs and temporary files
+*.log
+logs/
+*.dumpstream
+out.log
+err.log
+backend_run.log
+backend_err.log
+.DS_Store
+Thumbs.db
+
