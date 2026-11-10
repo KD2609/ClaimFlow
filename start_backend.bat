@@ -24,5 +24,6 @@ if not exist "target\insurance-claim-automation-1.0.0.jar" (
 )
 
 echo Launching Spring Boot server with Dev profile (H2 PostgreSQL Compatibility Mode)...
+set "SPRING_PROFILES_ACTIVE=dev"
 java -Dspring.profiles.active=dev -jar target\insurance-claim-automation-1.0.0.jar
 pause

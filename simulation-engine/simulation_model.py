@@ -66,13 +66,14 @@ def simulate_manual_system(
     env.run(until=duration_hours * 60.0)
 
     # Calculate summary metrics
+    processed_count = len(service_times)
     avg_wait = sum(wait_times) / len(wait_times) if wait_times else 0.0
     avg_service = sum(service_times) / len(service_times) if service_times else mean_service_time_min
     avg_cycle = avg_wait + avg_service
 
     # Labor Cost = Number of employees * duration * hourly rate
     total_cost = num_employees * duration_hours * employee_hourly_rate
-    cost_per_claim = total_cost / processed_count if processed_count > 0 else 0.0
+    cost_per_claim = (total_cost / max(1, processed_count)) if processed_count > 0 else 0.0
 
     # Traffic intensity (rho): rho = (lambda * E[S]) / (c * 60)
     traffic_intensity = (arrival_rate * avg_service) / (num_employees * 60.0)
@@ -170,12 +171,13 @@ def simulate_automated_system(
     human_escalation_cost = human_escalation_hours * employee_hourly_rate
     total_cost = bot_cost + human_escalation_cost
 
-    cost_per_claim = total_cost / processed_count if processed_count > 0 else 0.0
+    processed_count = len(total_durations)
+    cost_per_claim = (total_cost / max(1, processed_count)) if processed_count > 0 else 0.0
     bot_traffic = (arrival_rate * mean_bot_time_min) / (num_bots * 60.0)
     bot_utilization = min(95.0, max(5.0, bot_traffic * 100.0))
     throughput_per_day = (processed_count / duration_hours) * 8.0
 
-    stp_rate = ((processed_count - exceptions_count) / processed_count * 100.0) if processed_count > 0 else 82.0
+    stp_rate = ((processed_count - exceptions_count) / max(1, processed_count) * 100.0) if processed_count > 0 else 82.0
     exc_rate = 100.0 - stp_rate
 
     return {
@@ -216,7 +218,7 @@ def calculate_comparison_and_roi(manual: Dict[str, Any], auto: Dict[str, Any]) -
     weekly_savings = max(50.0, manual["totalOperationalCost"] - auto["totalOperationalCost"])
     monthly_savings = weekly_savings * 4.33
     annual_savings = monthly_savings * 12.0
-    payback_months = (initial_investment / monthly_savings) if monthly_savings > 0 else 4.2
+    payback_months = (initial_investment / max(0.01, monthly_savings)) if monthly_savings > 0 else 4.2
     three_year_roi = ((annual_savings * 3.0 - initial_investment) / initial_investment) * 100.0
 
     unit_savings = manual["costPerClaim"] - auto["costPerClaim"]
@@ -280,3 +282,20 @@ def run_full_simulation(
         "comparison": comp_and_roi["comparison"],
         "roi": comp_and_roi["roi"]
     }
+
+
+class ClaimSimulationEngine:
+    """Convenience wrapper class for running the full discrete-event simulation model."""
+
+    def __init__(self, num_claims: int = 250, duration_hours: float = 40.0, num_employees: int = 4, num_bots: int = 3, **kwargs):
+        self.params = {
+            "num_claims": num_claims,
+            "duration_hours": duration_hours,
+            "num_employees": num_employees,
+            "num_bots": num_bots,
+            **kwargs
+        }
+
+    def run(self) -> Dict[str, Any]:
+        return run_full_simulation(**self.params)
+
