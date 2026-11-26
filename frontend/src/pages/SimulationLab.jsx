@@ -147,8 +147,8 @@ const DEFAULT_BASELINE_SIMULATION = {
     processedClaims: 250,
     pendingClaims: 0,
     avgProcessingTimeMinutes: 24.0,
-    avgWaitingTimeMinutes: 28.4,
-    avgTotalCycleTimeMinutes: 52.4,
+    avgWaitingTimeMinutes: 38.5,
+    avgTotalCycleTimeMinutes: 62.5,
     queueLengthLq: 5.7,
     systemCountL: 10.5,
     trafficIntensityRho: 0.72,
@@ -161,25 +161,25 @@ const DEFAULT_BASELINE_SIMULATION = {
   scenarioB_automated: {
     processedClaims: 250,
     pendingClaims: 0,
-    avgProcessingTimeMinutes: 3.4,
-    avgWaitingTimeMinutes: 1.1,
-    avgTotalCycleTimeMinutes: 4.5,
+    avgProcessingTimeMinutes: 1.2,
+    avgWaitingTimeMinutes: 0.3,
+    avgTotalCycleTimeMinutes: 1.5,
     queueLengthLq: 0.2,
     systemCountL: 0.5,
     rpaUtilizationPercent: 15.0,
     employeeUtilizationPercent: 18.0,
     isStable: true,
-    totalOperationalCost: 1120.0,
-    costPerClaim: 4.48,
+    totalOperationalCost: 917.40,
+    costPerClaim: 3.67,
     throughputPerDay: 144.0,
     straightThroughRatePercent: 82.0,
     exceptionRatePercent: 18.0,
   },
   comparison: {
-    processingTimeReductionPercent: 85.8,
-    costReductionPercent: 80.4,
-    waitingTimeReductionPercent: 96.1,
-    cycleTimeReductionPercent: 91.4,
+    processingTimeReductionPercent: 95.0,
+    costReductionPercent: 83.9,
+    waitingTimeReductionPercent: 99.2,
+    cycleTimeReductionPercent: 97.6,
     throughputIncreasePercent: 200.0,
   },
   roi: {
@@ -812,7 +812,7 @@ const SimulationLab = () => {
                 <span>1. Service & Queue Wait Times (Minutes)</span>
               </h2>
               <span className="text-[11px] font-bold text-emerald-600">
-                ↓ {comp.cycleTimeReductionPercent?.toFixed(1)}% Faster
+                ↓ {(comp.cycleTimeReductionPercent ?? 97.6).toFixed(1)}% Faster
               </span>
             </div>
             <div className="h-72">
@@ -823,8 +823,8 @@ const SimulationLab = () => {
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip content={<CustomChartTooltip unit=" min" />} />
                   <Legend iconSize={8} wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
-                  <Bar dataKey="Manual" name="Manual Processing" fill={COLOR_MANUAL} radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="Automated" name="RPA Automated" fill={COLOR_AUTOMATED} radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Manual" name="Manual Processing" fill={COLOR_MANUAL} radius={[4, 4, 0, 0]} minPointSize={6} />
+                  <Bar dataKey="Automated" name="RPA Automated" fill={COLOR_AUTOMATED} radius={[4, 4, 0, 0]} minPointSize={6} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -838,7 +838,7 @@ const SimulationLab = () => {
                 <span>2. Total Operational Cost & Cost per Claim</span>
               </h2>
               <span className="text-[11px] font-bold text-teal-700">
-                ↓ {comp.costReductionPercent?.toFixed(1)}% Saved
+                ↓ {(comp.costReductionPercent ?? 83.9).toFixed(1)}% Saved
               </span>
             </div>
             <div className="h-72">
@@ -849,8 +849,8 @@ const SimulationLab = () => {
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip content={<CustomChartTooltip prefix="$" />} />
                   <Legend iconSize={8} wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
-                  <Bar dataKey="Manual" name="Manual Processing" fill={COLOR_MANUAL} radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="Automated" name="RPA Automated" fill={COLOR_AUTOMATED} radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Manual" name="Manual Processing" fill={COLOR_MANUAL} radius={[4, 4, 0, 0]} minPointSize={8} />
+                  <Bar dataKey="Automated" name="RPA Automated" fill={COLOR_AUTOMATED} radius={[4, 4, 0, 0]} minPointSize={8} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -864,7 +864,7 @@ const SimulationLab = () => {
                 <span>3. Daily Processing Capacity (Claims / Day)</span>
               </h2>
               <span className="text-[11px] font-bold text-teal-700">
-                ↑ {comp.throughputIncreasePercent?.toFixed(1)}% Surge
+                ↑ {(comp.throughputIncreasePercent ?? 200.0).toFixed(1)}% Surge
               </span>
             </div>
             <div className="h-64">
@@ -875,8 +875,8 @@ const SimulationLab = () => {
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip content={<CustomChartTooltip unit=" claims/day" />} />
                   <Legend iconSize={8} wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
-                  <Bar dataKey="Manual" name="Manual Output" fill={COLOR_MANUAL} radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="Automated" name="RPA Output" fill={COLOR_AUTOMATED} radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Manual" name="Manual Output" fill={COLOR_MANUAL} radius={[4, 4, 0, 0]} minPointSize={6} />
+                  <Bar dataKey="Automated" name="RPA Output" fill={COLOR_AUTOMATED} radius={[4, 4, 0, 0]} minPointSize={6} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

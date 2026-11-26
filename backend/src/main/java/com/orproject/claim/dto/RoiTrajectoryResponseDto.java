@@ -1,5 +1,7 @@
 package com.orproject.claim.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Map;
 
@@ -11,6 +13,9 @@ public class RoiTrajectoryResponseDto {
     private Double threeYearNetProfit;
     private Double threeYearRoiPercent;
     private Double breakEvenMilestoneMonth;
+
+    @JsonProperty("trajectory")
+    @JsonAlias({"trajectoryData", "trajectory"})
     private List<Map<String, Object>> trajectoryData;
     private String statusMessage;
 

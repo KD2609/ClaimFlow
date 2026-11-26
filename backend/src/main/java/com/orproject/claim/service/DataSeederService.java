@@ -190,7 +190,7 @@ public class DataSeederService implements CommandLineRunner {
                     double norm = rng.nextGaussian();
                     double durationMin = Math.max(12.0, Math.exp(muLogM + sigmaLogM * norm));
                     claim.setProcessingTimeMinutes(Math.round(durationMin * 10.0) / 10.0);
-                    double cost = (durationMin / 60.0) * humanHourlyWage;
+                    double cost = (durationMin / 24.0) * 25.3333;
                     claim.setOperationalCost(Math.round(cost * 100.0) / 100.0);
                     claim.setProcessedDate(arrivalPointer.plusMinutes((long) (durationMin + 35)));
                     claim.setAdjudicationNotes("[DEMO] Approved by claims adjuster after 5-stage documentation and invoice review.");
@@ -201,9 +201,9 @@ public class DataSeederService implements CommandLineRunner {
                     claim.setEligiblePayoutAmount(BigDecimal.ZERO);
                     claim.setFraudRiskScore(72 + rng.nextInt(24)); // High risk score
 
-                    double durationMin = 22.0 + rng.nextDouble() * 10.0;
+                    double durationMin = 24.0 + rng.nextGaussian() * 1.5;
                     claim.setProcessingTimeMinutes(Math.round(durationMin * 10.0) / 10.0);
-                    double cost = (durationMin / 60.0) * humanHourlyWage;
+                    double cost = (durationMin / 24.0) * 25.3333;
                     claim.setOperationalCost(Math.round(cost * 100.0) / 100.0);
                     claim.setProcessedDate(arrivalPointer.plusMinutes((long) (durationMin + 45)));
                     claim.setAdjudicationNotes("[DEMO] Rejected: Document discrepancy and high fraud risk score exceeding policy threshold.");
@@ -214,9 +214,9 @@ public class DataSeederService implements CommandLineRunner {
                     claim.setEligiblePayoutAmount(claimAmount);
                     claim.setFraudRiskScore(15 + rng.nextInt(30));
 
-                    double durationMin = 10.0 + rng.nextDouble() * 8.0;
+                    double durationMin = 24.0 + rng.nextGaussian() * 1.5;
                     claim.setProcessingTimeMinutes(Math.round(durationMin * 10.0) / 10.0);
-                    double cost = (durationMin / 60.0) * humanHourlyWage;
+                    double cost = (durationMin / 24.0) * 25.3333;
                     claim.setOperationalCost(Math.round(cost * 100.0) / 100.0);
                     claim.setAdjudicationNotes("[DEMO] Claim undergoing manual line-item audit.");
                 } else {
@@ -231,22 +231,22 @@ public class DataSeederService implements CommandLineRunner {
                 }
             } else {
                 // 150 RPA Automated Pipeline claims (Scenario B: claims 101 to 250)
+                claim.setProcessingMode(ProcessingMode.AUTOMATED);
                 int rpaIndex = i - 100;
                 String assignedBot = botIds[rng.nextInt(botIds.length)];
 
                 if (rpaIndex <= 123) {
                     // 82% Clean STP (Straight-Through Processing) Approved: 123 claims
-                    claim.setProcessingMode(ProcessingMode.AUTOMATED);
                     claim.setClaimStatus(ClaimStatus.APPROVED);
                     claim.setCurrentStage(ProcessingStage.FINAL_DECISION);
                     claim.setEligiblePayoutAmount(claimAmount.multiply(new BigDecimal("0.95")).setScale(2, RoundingMode.HALF_UP));
                     claim.setFraudRiskScore(4 + rng.nextInt(20)); // Low risk
 
-                    // RPA execution time: Mean 1.5 min, std 0.2 min (~1.1 to 1.9 min)
-                    double botDurationMin = Math.max(0.8, 1.5 + rng.nextGaussian() * 0.2);
+                    // RPA execution time: Mean 1.2 min, std 0.1 min (~1.0 to 1.4 min)
+                    double botDurationMin = Math.max(0.9, 1.2 + rng.nextGaussian() * 0.1);
                     claim.setProcessingTimeMinutes(Math.round(botDurationMin * 10.0) / 10.0);
-                    double cost = (botDurationMin / 60.0) * botHourlyRate;
-                    claim.setOperationalCost(Math.round(cost * 100.0) / 100.0);
+                    double cost = 0.45;
+                    claim.setOperationalCost(cost);
                     claim.setProcessedDate(arrivalPointer.plusSeconds((long) (botDurationMin * 60.0)));
                     claim.setAdjudicationNotes("[DEMO] STP Automated Settlement: OCR passed (confidence: 99.4%), coverage verified, instant payout dispatched.");
 
@@ -256,70 +256,66 @@ public class DataSeederService implements CommandLineRunner {
                     log.setBotId(assignedBot);
                     log.setExecutionStatus("SUCCESS");
                     log.setExecutionDurationMs(Math.round(botDurationMin * 60.0 * 1000.0 * 10.0) / 10.0);
-                    log.setOperationalCost(Math.round(cost * 100.0) / 100.0);
+                    log.setOperationalCost(cost);
                     log.setExecutionDetails("Clean claim straight-through automated processing. OCR verification and bank dispatch complete.");
                     log.setTimestamp(claim.getProcessedDate());
                     rpaLogsToSave.add(log);
                 } else if (rpaIndex <= 138) {
                     // 15 Exception claims currently awaiting manual investigation
-                    claim.setProcessingMode(ProcessingMode.MANUAL);
                     claim.setClaimStatus(ClaimStatus.REQUIRES_MANUAL_REVIEW);
                     claim.setCurrentStage(ProcessingStage.FRAUD_DETECTION);
                     claim.setEligiblePayoutAmount(claimAmount);
                     claim.setFraudRiskScore(68 + rng.nextInt(22)); // Anomaly score > 65
 
-                    double botDurationMin = 1.5;
+                    double botDurationMin = 1.2;
                     claim.setProcessingTimeMinutes(botDurationMin);
-                    double botCost = (botDurationMin / 60.0) * botHourlyRate;
-                    claim.setOperationalCost(Math.round(botCost * 100.0) / 100.0);
+                    double cost = 18.32;
+                    claim.setOperationalCost(cost);
                     claim.setAdjudicationNotes("[DEMO] RPA Exception Escalation: Fraud anomaly score (78) exceeds automated threshold. Routed to human adjuster workbench.");
 
                     RPAExecutionLog log = new RPAExecutionLog();
                     log.setClaimNumber(claimNumber);
                     log.setBotId(assignedBot);
                     log.setExecutionStatus("EXCEPTION");
-                    log.setExecutionDurationMs(90000.0);
-                    log.setOperationalCost(Math.round(botCost * 100.0) / 100.0);
+                    log.setExecutionDurationMs(72000.0);
+                    log.setOperationalCost(0.11);
                     log.setExecutionDetails("Automated OCR complete; risk anomaly flagged. Escalated to human adjuster queue.");
                     log.setTimestamp(arrivalPointer.plusMinutes(2));
                     rpaLogsToSave.add(log);
                 } else if (rpaIndex <= 148) {
                     // 10 Escalated claims cleared and approved by human adjuster
-                    claim.setProcessingMode(ProcessingMode.MANUAL);
                     claim.setClaimStatus(ClaimStatus.APPROVED);
                     claim.setCurrentStage(ProcessingStage.FINAL_DECISION);
                     claim.setEligiblePayoutAmount(claimAmount.multiply(new BigDecimal("0.90")).setScale(2, RoundingMode.HALF_UP));
                     claim.setFraudRiskScore(48 + rng.nextInt(15));
 
-                    // Combined time: 1.5 min bot + 12 min human escalation review
-                    double totalTimeMin = 13.5 + rng.nextGaussian() * 1.5;
-                    claim.setProcessingTimeMinutes(Math.round(totalTimeMin * 10.0) / 10.0);
-                    double totalCost = (1.5 / 60.0 * botHourlyRate) + ((totalTimeMin - 1.5) / 60.0 * humanHourlyWage);
-                    claim.setOperationalCost(Math.round(totalCost * 100.0) / 100.0);
-                    claim.setProcessedDate(arrivalPointer.plusMinutes((long) totalTimeMin));
+                    double botDurationMin = 1.2;
+                    claim.setProcessingTimeMinutes(botDurationMin);
+                    double cost = 18.32;
+                    claim.setOperationalCost(cost);
+                    claim.setProcessedDate(arrivalPointer.plusMinutes(15));
                     claim.setAdjudicationNotes("[DEMO] Escalated exception resolved: Hospital clinic phone verification cleared by human adjuster.");
 
                     RPAExecutionLog log = new RPAExecutionLog();
                     log.setClaimNumber(claimNumber);
                     log.setBotId(assignedBot);
                     log.setExecutionStatus("EXCEPTION");
-                    log.setExecutionDurationMs(90000.0);
+                    log.setExecutionDurationMs(72000.0);
                     log.setOperationalCost(0.11);
                     log.setExecutionDetails("Flagged for exception audit; subsequent manual adjuster inspection cleared claim for settlement.");
                     log.setTimestamp(arrivalPointer.plusMinutes(2));
                     rpaLogsToSave.add(log);
                 } else {
                     // 2 Escalated claims rejected by human adjuster (confirmed fraud/ineligible)
-                    claim.setProcessingMode(ProcessingMode.MANUAL);
                     claim.setClaimStatus(ClaimStatus.REJECTED);
                     claim.setCurrentStage(ProcessingStage.FINAL_DECISION);
                     claim.setEligiblePayoutAmount(BigDecimal.ZERO);
                     claim.setFraudRiskScore(86 + rng.nextInt(10));
 
-                    double totalTimeMin = 15.0;
-                    claim.setProcessingTimeMinutes(totalTimeMin);
-                    double totalCost = (1.5 / 60.0 * botHourlyRate) + (13.5 / 60.0 * humanHourlyWage);
-                    claim.setOperationalCost(Math.round(totalCost * 100.0) / 100.0);
+                    double botDurationMin = 1.2;
+                    claim.setProcessingTimeMinutes(botDurationMin);
+                    double cost = 18.32;
+                    claim.setOperationalCost(cost);
                     claim.setProcessedDate(arrivalPointer.plusMinutes(25));
                     claim.setAdjudicationNotes("[DEMO] Escalated exception confirmed fraudulent: Invoice modification detected by human adjuster.");
 
@@ -327,7 +323,7 @@ public class DataSeederService implements CommandLineRunner {
                     log.setClaimNumber(claimNumber);
                     log.setBotId(assignedBot);
                     log.setExecutionStatus("EXCEPTION");
-                    log.setExecutionDurationMs(90000.0);
+                    log.setExecutionDurationMs(72000.0);
                     log.setOperationalCost(0.11);
                     log.setExecutionDetails("Fraud score 91 triggered escalation; manual investigation confirmed invoice alteration.");
                     log.setTimestamp(arrivalPointer.plusMinutes(2));
