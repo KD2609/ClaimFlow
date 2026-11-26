@@ -9,38 +9,6 @@ const api = axios.create({
   },
 });
 
-// Attach token if present
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-// Expired or invalid bearer tokens require the user to authenticate again.
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401 && localStorage.getItem('token')) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      if (window.location.pathname !== '/login') {
-        window.location.assign('/login');
-      }
-    }
-    return Promise.reject(error);
-  }
-);
-
-// Auth Endpoints
-export const authApi = {
-  login: (credentials) => api.post('/api/auth/login', credentials),
-};
-
 // Dashboard Endpoints
 export const dashboardApi = {
   getStats: () => api.get('/api/dashboard/stats'),
@@ -76,6 +44,7 @@ export const simulationApi = {
   getExperiments: (params = {}) => api.get('/api/simulation/experiments', { params }),
   runExperiments: (params = {}) => api.get('/api/simulation/experiments', { params }),
   getEngineStatus: () => api.get('/api/simulation/engine-status'),
+  calculateRoiTrajectory: (params) => api.post('/api/simulation/roi-trajectory', params),
 };
 
 export default api;

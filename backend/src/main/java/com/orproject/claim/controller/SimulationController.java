@@ -1,5 +1,7 @@
 package com.orproject.claim.controller;
 
+import com.orproject.claim.dto.RoiTrajectoryRequestDto;
+import com.orproject.claim.dto.RoiTrajectoryResponseDto;
 import com.orproject.claim.dto.SimulationRequestDto;
 import com.orproject.claim.dto.SimulationResponseDto;
 import com.orproject.claim.service.SimulationService;
@@ -35,5 +37,13 @@ public class SimulationController {
     @GetMapping("/engine-status")
     public ResponseEntity<Map<String, String>> getEngineStatus() {
         return ResponseEntity.ok(simulationService.getEngineStatus());
+    }
+
+    @PostMapping("/roi-trajectory")
+    public ResponseEntity<RoiTrajectoryResponseDto> calculateRoiTrajectory(@RequestBody(required = false) RoiTrajectoryRequestDto request) {
+        if (request == null) {
+            request = new RoiTrajectoryRequestDto();
+        }
+        return ResponseEntity.ok(simulationService.calculateRoiTrajectory(request));
     }
 }

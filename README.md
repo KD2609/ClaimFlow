@@ -49,17 +49,21 @@ Incoming Claims (Poisson Arrival λ)
 
 #### Scenario A: Traditional Manual Processing ($M/G/c_m$)
 - **Arrival Process ($M$)**: Poisson arrivals with rate $\lambda$ (claims per hour); interarrival times $t_a \sim \text{Exponential}(1/\lambda)$.
-- **Service Distribution ($G$)**: Human service duration follows a heavy-tailed **Lognormal distribution** $\text{Lognormal}(\mu_m, \sigma_m^2)$ reflecting cognitive variability and document complexity ($E[S_m] = 24.0\text{ min}$).
+- **Service Distribution ($G$)**: Human service duration follows a heavy-tailed **Lognormal distribution** reflecting cognitive variability and document complexity ($E[S_m] = 24.0\text{ min}$, $\sigma_m = 6.0\text{ min}$, squared coefficient of variation $C_s^2 = (\sigma_m / E[S_m])^2 = 0.0625$).
 - **Servers ($c_m$)**: $c_m = 4$ parallel human adjusters.
 - **Traffic Intensity ($\rho_m$)**:
   $$\rho_m = \frac{\lambda \cdot E[S_m]}{c_m \cdot 60}$$
-  When $\lambda > \frac{60 \cdot c_m}{E[S_m]} = 10 \text{ claims/hr}$, $\rho_m \to 1.0$, causing queue lengths to explode asymptotically.
+  When $\rho_m \ge 1.0$, the queue buffer is unstable and waiting times diverge towards infinity.
+- **Analytical $M/G/c$ Approximation (Allen-Cunneen)**:
+  When the discrete-event engine is running in analytical fallback mode, average waiting time is determined by Allen-Cunneen formula with exact Erlang-C delay probability $P_C(c_m, a_m)$:
+  $$W_q \approx \left(\frac{P_C(c_m, a_m)}{c_m \cdot \mu_m - \lambda}\right) \cdot \left(\frac{1 + C_s^2}{2}\right)$$
+  where offered load $a_m = \lambda / \mu_m$.
 
 #### Scenario B: Automated RPA Pipeline with Exception Escalation
-- **Primary Stage (RPA Bots)**: $c_{\text{rpa}} = 3$ automated bot workers with rapid, near-deterministic service times $S_{\text{rpa}} \sim \mathcal{N}(\mu_{\text{rpa}}, \sigma_{\text{rpa}}^2)$ with $\mu_{\text{rpa}} = 1.5\text{ min}$, $\sigma_{\text{rpa}} = 0.2\text{ min}$.
+- **Primary Stage (RPA Bots)**: $c_{\text{rpa}} = 3$ automated bot workers with rapid, near-deterministic service times ($E[S_{\text{rpa}}] = 1.5\text{ min}$, $\sigma_{\text{rpa}} = 0.2\text{ min}$).
 - **Decision Branching**:
   - Probability $1 - p_{\text{exception}} \approx 82\%$: **Straight-Through Processing (STP)** instant approval.
-  - Probability $p_{\text{exception}} \approx 18\%$: Escalation to human adjusters for exception handling (missing documents, fraud anomaly score $> 65$, or policy mismatches) with reduced human service time $S_{\text{esc}} \sim \text{Lognormal}(12.0, 3.0)$.
+  - Probability $p_{\text{exception}} \approx 18\%$: Escalation to human adjusters for exception handling (missing documents, fraud anomaly score $> 65$, or policy mismatches) with reduced human service time ($E[S_{\text{esc}}] = 12.0\text{ min}$).
 - **Effective RPA Traffic Intensity ($\rho_{\text{rpa}}$)**:
   $$\rho_{\text{rpa}} = \frac{\lambda \cdot E[S_{\text{rpa}}]}{c_{\text{rpa}} \cdot 60}$$
 
@@ -67,7 +71,7 @@ Incoming Claims (Poisson Arrival λ)
 In both discrete-event simulation scenarios, empirical metrics satisfy **Little's Law**:
 $$L = \lambda \cdot W \quad \text{and} \quad L_q = \lambda \cdot W_q$$
 Where:
-- $L$: Average number of claims in the system.
+- $L$: Average number of claims in the system ($L = L_q + \rho$).
 - $L_q$: Average number of pending claims waiting in the queue buffer.
 - $W$: Total average cycle time ($W = W_q + W_s$).
 - $W_q$: Average waiting time in queue.
@@ -78,9 +82,9 @@ Where:
 - **Annual Maintenance**: $M_{\text{annual}} = \$2,500/\text{year}$.
 - **Monthly Net Operational Benefit**:
   $$B_{\text{monthly}} = (V_{\text{monthly}} \cdot \Delta C_{\text{unit}}) - \frac{M_{\text{annual}}}{12}$$
-  Where $\Delta C_{\text{unit}} = C_{\text{manual}}/N - C_{\text{auto}}/N$.
+  Where $\Delta C_{\text{unit}} = C_{\text{manual\_per\_claim}} - C_{\text{auto\_per\_claim}}$.
 - **Payback Period**:
-  $$\text{Payback (Months)} = \frac{I_0}{B_{\text{monthly}}}$$
+  $$\text{Payback (Months)} = \frac{I_0}{B_{\text{monthly}}} \quad (\text{for } B_{\text{monthly}} > 0)$$
 - **3-Year Net ROI**:
   $$\text{ROI}_{3\text{yr}} (\%) = \frac{(B_{\text{monthly}} \cdot 36) - I_0}{I_0} \times 100$$
 
@@ -105,33 +109,32 @@ Designed specifically for a college demonstration—clean, readable, and easy to
 c:\Projects\OR_Project\
 ├── backend\                           # Spring Boot 3 Backend
 │   ├── src\main\java\com\orproject\claim\
-│   │   ├── config\SecurityConfig.java # Clean open CORS & BCrypt encoder (no complex filters)
-│   │   ├── controller\                # Auth, Claim, ManualProcessing, RPA, Simulation, Dashboard
-│   │   ├── dto\                       # Minimal, clean request/response DTOs
-│   │   ├── model\                     # 3 Core Entities: InsuranceClaim, RPAExecutionLog, User
-│   │   ├── repository\                # 3 Spring Data JPA Repositories
-│   │   └── service\                   # ClaimService, RPAExecutionService, SimulationService, DataSeeder
-│   ├── pom.xml                        # Maven dependencies
+│   │   ├── config\                    # SecurityConfig (stateless, security headers, CORS), RateLimitingFilter
+│   │   ├── controller\                # Claim, ManualProcessing, RPA, Simulation, Dashboard
+│   │   ├── dto\                       # Minimal, clean request/response DTOs (including RoiTrajectory)
+│   │   ├── model\                     # 2 Core Entities: InsuranceClaim, RPAExecutionLog
+│   │   ├── repository\                # 2 Spring Data JPA Repositories
+│   │   └── service\                   # ClaimService, RPAExecutionService, SimulationService, DashboardService, DataSeeder
+│   ├── pom.xml                        # Maven dependencies (clean without JJWT bloat)
 │   └── mvnw.cmd                       # Maven wrapper
-├── frontend\                          # React + Vite + Tailwind Dashboard
+├── frontend\                          # React + Vite + Tailwind Code-Split Dashboard
 │   ├── src\
-│   │   ├── components\layout\         # Top horizontal Navbar and clean responsive Layout (no sidebar)
-│   │   ├── context\AuthContext.jsx    # Client session context
-│   │   ├── pages\                     # Flagship Pages
+│   │   ├── components\layout\         # Top horizontal Navbar and clean responsive Layout (no auth required)
+│   │   ├── pages\                     # Code-Split Flagship Pages (React.lazy / Suspense)
 │   │   │   ├── HomePage.jsx           # Public showcase landing page (Features, OR Overview, How It Works)
-│   │   │   ├── Dashboard.jsx          # Live KPI summary cards & queue status charts (/dashboard)
+│   │   │   ├── Dashboard.jsx          # Live KPI telemetry & queue status charts (/dashboard)
 │   │   │   ├── ClaimsManagement.jsx   # Claims table, search, modal intake & dossier inspection
 │   │   │   ├── ManualProcessing.jsx   # 5-stage interactive manual adjuster workbench
 │   │   │   ├── AutomatedProcessing.jsx# RPA bot execution console & terminal output
-│   │   │   ├── SimulationLab.jsx      # Flagship unified OR lab (Studio, Charts, Sensitivity, ROI)
-│   │   │   └── Login.jsx              # Login screen with username shortcuts
+│   │   │   └── SimulationLab.jsx      # Flagship unified OR lab (Studio, Charts, Sensitivity, ROI)
 │   │   └── services\api.js            # Clean Axios REST client
 │   ├── package.json
-│   └── vite.config.js
+│   └── vite.config.js                 # Rollup vendor-chunk splitting for rapid loading
 ├── simulation-engine\                 # Python SimPy Discrete-Event Service
-│   ├── simulation_model.py            # Clean SimPy 4 functions: manual, automated & ROI
+│   ├── simulation_model.py            # Clean SimPy 4 functions: manual (M/G/c), automated & ROI
 │   ├── experiments.py                 # 3 Sensitivity experiments (λ, staff, bots)
 │   ├── generate_charts.py             # Standalone Matplotlib chart exporter
+│   ├── test_queueing_theory.py        # Automated pytest suite verifying rho, Little's Law & stability
 │   ├── main.py                        # FastAPI microservice on port 8000
 │   └── requirements.txt               # simpy, fastapi, uvicorn, numpy, pandas, matplotlib
 ├── rpa-bot\                           # RPA Worker & UiPath Deliverables
@@ -139,6 +142,10 @@ c:\Projects\OR_Project\
 │   └── UiPath_Workflow.xaml           # UiPath Studio sequence & flowchart workflow
 ├── start_all.bat                      # 1-Click Windows 11 launcher for all 3 services
 ├── start_backend.bat                  # Windows runner for Spring Boot (Port 8080)
+├── start_simulation.bat               # Windows runner for SimPy FastAPI (Port 8000)
+├── start_frontend.bat                 # Windows runner for React Vite (Port 5173)
+└── README.md                          # Project documentation & viva guide
+```
 ├── start_simulation.bat               # Windows runner for SimPy FastAPI (Port 8000)
 ├── start_frontend.bat                 # Windows runner for React Vite (Port 5173)
 └── README.md                          # Project documentation & viva guide
@@ -231,16 +238,12 @@ To stop services cleanly on Windows:
 
 ---
 
-## 6. Account Setup & Pre-Seeded Data
+## 6. Zero-Auth Access & Data Environment
 
-The application automatically seeds **60 realistic insurance claims** across Health, Vehicle, and Life portfolios on startup:
-
-| Role | Username | Password | Capabilities |
-|---|---|---|---|
-| **Administrator** | `admin` | Set through `CLAIMFLOW_ADMIN_PASSWORD` when bootstrapping | Full access to Simulation Studio, RPA Bot execution, Audit logs, and Claims Management |
-| **Claim Adjuster** | `processor` | Set through `CLAIMFLOW_PROCESSOR_PASSWORD` when bootstrapping | Access to 5-Stage Manual Workbench, Claim Intake, and Dossier Inspection |
-
-*(The login screen can fill a username; passwords are never embedded in the frontend.)*
+ClaimFlow is designed as an open, accessible Operations Research demonstration platform:
+- **No Login / Authentication Required**: All endpoints and UI pages are immediately accessible without credentials.
+- **Production Cleanliness**: In production environments (such as Supabase PostgreSQL on Render), dummy claim seeding is **disabled by default** (`claimflow.seed-demo-data=false`). Telemetry displays the active `Live Database` badge.
+- **Optional Demo Dataset**: If a sample dataset is needed for viva demonstration or local inspection, enable it via environment variable `SEED_DEMO_DATA=true` or by activating the Spring profile `--spring.profiles.active=demo`. When active, 60 realistic claims across Health, Vehicle, and Life categories are loaded and tagged with `[DEMO]` notes.
 
 ---
 
@@ -314,8 +317,8 @@ When demonstrating this project to professors or examiners:
    - Verify Little's Law: $L = \lambda \cdot W$ and $L_q = \lambda \cdot W_q$.
 
 3. **How the Backend is Architected**:
-   - The backend uses **3 straightforward JPA entities**: `InsuranceClaim` (holds all claim attributes, status, and labor costs), `RPAExecutionLog` (records bot execution history), and `User` (handles authentication).
-   - If Python is offline, `SimulationService.java` includes an analytical $M/G/c$ queueing fallback so the web app never crashes during an evaluation.
+   - The backend uses **2 straightforward JPA entities**: `InsuranceClaim` (holds all claim attributes, status, and labor costs) and `RPAExecutionLog` (records bot execution history).
+   - If Python is offline, `SimulationService.java` includes an analytical $M/G/c$ Allen-Cunneen queueing fallback with exact Erlang-C delay computation so the web app remains fully operational.
 
 4. **How RPA Saves Costs**:
    - Manual human adjuster: $\$28.50/\text{hr} \times (24\text{ min} / 60) \approx \$11.40$ per clean claim.

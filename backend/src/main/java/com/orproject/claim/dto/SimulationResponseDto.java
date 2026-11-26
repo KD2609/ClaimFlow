@@ -12,8 +12,20 @@ public class SimulationResponseDto {
     private Map<String, Object> comparison;
     private Map<String, Object> roi;
     private String createdAt;
+    private String dataSource = "analytical-approximation";
+    private boolean isStable = true;
+    private String stabilityWarning;
 
     public SimulationResponseDto() {}
+
+    public String getDataSource() { return dataSource; }
+    public void setDataSource(String dataSource) { this.dataSource = dataSource; }
+
+    public boolean isStable() { return isStable; }
+    public void setStable(boolean stable) { isStable = stable; }
+
+    public String getStabilityWarning() { return stabilityWarning; }
+    public void setStabilityWarning(String stabilityWarning) { this.stabilityWarning = stabilityWarning; }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

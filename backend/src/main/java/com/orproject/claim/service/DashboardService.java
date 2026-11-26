@@ -11,9 +11,11 @@ import org.springframework.stereotype.Service;
 public class DashboardService {
 
     private final InsuranceClaimRepository claimRepository;
+    private final DataSeederService dataSeederService;
 
-    public DashboardService(InsuranceClaimRepository claimRepository) {
+    public DashboardService(InsuranceClaimRepository claimRepository, DataSeederService dataSeederService) {
         this.claimRepository = claimRepository;
+        this.dataSeederService = dataSeederService;
     }
 
     public DashboardStatsDto getDashboardStats() {
@@ -44,6 +46,7 @@ public class DashboardService {
         dto.setAutomatedProcessedCount((int) claimRepository.countByProcessingMode(ProcessingMode.AUTOMATED));
         dto.setManualOperationalCost(claimRepository.getOperationalCostByProcessingMode(ProcessingMode.MANUAL));
         dto.setAutomatedOperationalCost(claimRepository.getOperationalCostByProcessingMode(ProcessingMode.AUTOMATED));
+        dto.setDataSource(dataSeederService.isDemoDataActive() ? "demo-data" : "live-database");
 
         return dto;
     }
