@@ -16,8 +16,12 @@ public class DashboardStatsDto {
     private int healthClaims;
     private int vehicleClaims;
     private int lifeClaims;
+    private String dataSource = "live-database";
 
     public DashboardStatsDto() {}
+
+    public String getDataSource() { return dataSource; }
+    public void setDataSource(String dataSource) { this.dataSource = dataSource; }
 
     public int getTotalClaims() { return totalClaims; }
     public void setTotalClaims(int totalClaims) { this.totalClaims = totalClaims; }

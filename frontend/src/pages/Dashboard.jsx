@@ -168,7 +168,19 @@ const Dashboard = () => {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Operations Dashboard</h1>
+          <div className="flex items-center space-x-3">
+            <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Operations Dashboard</h1>
+            {stats?.dataSource === 'live-database' ? (
+              <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Live Database</span>
+              </span>
+            ) : (
+              <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-semibold">
+                <span>Demo Dataset Active</span>
+              </span>
+            )}
+          </div>
           <p className="text-sm text-slate-500 mt-1">
             Real-time telemetry of claim intake, manual queue congestion, and RPA bot execution.
           </p>

@@ -2,67 +2,63 @@ package com.orproject.claim.service;
 
 import com.orproject.claim.model.*;
 import com.orproject.claim.repository.InsuranceClaimRepository;
-import com.orproject.claim.repository.UserRepository;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.env.Environment;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Random;
 
+/**
+ * Demo Data Seeder for ClaimFlow.
+ * Only executes when the 'demo' profile is active or 'claimflow.seed-demo-data=true'.
+ * Production profiles (e.g., Supabase PostgreSQL) will NEVER seed demo claims automatically.
+ */
 @Service
 public class DataSeederService implements CommandLineRunner {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataSeederService.class);
 
-    private final UserRepository userRepository;
     private final InsuranceClaimRepository claimRepository;
-    private final PasswordEncoder passwordEncoder;
-    @Value("${CLAIMFLOW_ADMIN_PASSWORD:}")
-    private String adminPassword;
-    @Value("${CLAIMFLOW_PROCESSOR_PASSWORD:}")
-    private String processorPassword;
+    private final Environment environment;
 
-    public DataSeederService(UserRepository userRepository,
-                             InsuranceClaimRepository claimRepository,
-                             PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
+    @Value("${claimflow.seed-demo-data:false}")
+    private boolean seedDemoDataProperty;
+
+    private boolean demoDataActive = false;
+
+    public DataSeederService(InsuranceClaimRepository claimRepository, Environment environment) {
         this.claimRepository = claimRepository;
-        this.passwordEncoder = passwordEncoder;
+        this.environment = environment;
+    }
+
+    public boolean isDemoDataActive() {
+        return demoDataActive;
     }
 
     @Override
     public void run(String... args) {
-        seedUsers();
-        seedClaims();
-    }
-
-    private void seedUsers() {
-        if (!userRepository.existsByUsername("admin")) {
-            if (adminPassword != null && !adminPassword.isBlank()) {
-                User admin = new User("admin", passwordEncoder.encode(adminPassword), "System Administrator", Role.ROLE_ADMIN);
-                userRepository.save(admin);
-            } else {
-                LOGGER.warn("Skipped admin bootstrap because CLAIMFLOW_ADMIN_PASSWORD is not configured");
-            }
-        }
-        if (!userRepository.existsByUsername("processor")) {
-            if (processorPassword != null && !processorPassword.isBlank()) {
-                User processor = new User("processor", passwordEncoder.encode(processorPassword), "Senior Claim Adjuster", Role.ROLE_CLAIM_PROCESSOR);
-                userRepository.save(processor);
-            } else {
-                LOGGER.warn("Skipped processor bootstrap because CLAIMFLOW_PROCESSOR_PASSWORD is not configured");
-            }
+        boolean isDemoProfile = Arrays.asList(environment.getActiveProfiles()).contains("demo");
+        if (seedDemoDataProperty || isDemoProfile) {
+            seedDemoClaims();
+            demoDataActive = true;
+        } else {
+            LOGGER.info("Startup demo data seeder skipped (production mode active: seed-demo-data is disabled)");
         }
     }
 
-    private void seedClaims() {
+    private void seedDemoClaims() {
         if (claimRepository.count() > 0) {
+            LOGGER.info("Claims table already contains records; skipping demo seed.");
+            demoDataActive = true;
             return;
         }
+
+        LOGGER.info("Seeding 60 realistic demonstration claims for academic evaluation...");
 
         String[] firstNames = {"James", "Mary", "Robert", "Patricia", "John", "Jennifer", "Michael", "Linda", "David", "Elizabeth", "William", "Barbara", "Richard", "Susan", "Joseph"};
         String[] lastNames = {"Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson"};
@@ -99,11 +95,10 @@ public class DataSeederService implements CommandLineRunner {
             claim.setInsuranceType(type);
             claim.setClaimAmount(claimAmount);
             claim.setCoverageAmount(new BigDecimal("50000.00"));
-            claim.setDescription("Claim filing for " + type.name().toLowerCase() + " event incident.");
+            claim.setDescription("[DEMO] Claim filing for " + type.name().toLowerCase() + " event incident.");
             claim.setAttachedDocuments("Invoice_" + i + ".pdf, ID_Verification.pdf");
             claim.setSubmissionDate(LocalDateTime.now().minusDays(random.nextInt(30)).minusHours(random.nextInt(24)));
 
-            // Distribute claim statuses realistically
             int roll = random.nextInt(100);
             if (roll < 35) {
                 claim.setClaimStatus(ClaimStatus.SUBMITTED);
@@ -134,20 +129,17 @@ public class DataSeederService implements CommandLineRunner {
                 claim.setProcessingMode(ProcessingMode.MANUAL);
                 claim.setEligiblePayoutAmount(BigDecimal.ZERO);
                 claim.setFraudRiskScore(random.nextInt(30) + 70);
-                claim.setProcessingTimeMinutes(18.0);
-                claim.setOperationalCost(8.55);
-                claim.setProcessedDate(LocalDateTime.now().minusDays(2));
             } else {
                 claim.setClaimStatus(ClaimStatus.REQUIRES_MANUAL_REVIEW);
                 claim.setCurrentStage(ProcessingStage.FRAUD_DETECTION);
-                claim.setProcessingMode(ProcessingMode.AUTOMATED);
-                claim.setFraudRiskScore(random.nextInt(25) + 68);
-                claim.setProcessingTimeMinutes(0.003);
-                claim.setOperationalCost(0.12);
-                claim.setAdjudicationNotes("[RPA BOT] Anomaly detected: Fraud risk score flagged for human review.");
+                claim.setProcessingMode(ProcessingMode.MANUAL);
+                claim.setFraudRiskScore(random.nextInt(25) + 75);
+                claim.setAdjudicationNotes("[DEMO] Escalated to human adjuster: anomalous claim invoice pattern.");
             }
 
             claimRepository.save(claim);
         }
+
+        LOGGER.info("Successfully seeded 60 demo insurance claims.");
     }
 }

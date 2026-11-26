@@ -16,7 +16,8 @@ import {
   Calendar,
   Layers,
   HelpCircle,
-  BookOpen
+  BookOpen,
+  AlertTriangle
 } from 'lucide-react';
 import {
   BarChart,
@@ -230,18 +231,18 @@ const SimulationLab = () => {
   const timeChartData = [
     {
       name: 'Service Time',
-      Manual: parseFloat(manual.avgProcessingTimeMinutes?.toFixed(1) || 24.0),
-      Automated: parseFloat(auto.avgProcessingTimeMinutes?.toFixed(1) || 1.8),
+      Manual: manual.avgProcessingTimeMinutes != null ? parseFloat(manual.avgProcessingTimeMinutes.toFixed(1)) : 0,
+      Automated: auto.avgProcessingTimeMinutes != null ? parseFloat(auto.avgProcessingTimeMinutes.toFixed(1)) : 0,
     },
     {
       name: 'Queue Wait Time',
-      Manual: parseFloat(manual.avgWaitingTimeMinutes?.toFixed(1) || 38.5),
-      Automated: parseFloat(auto.avgWaitingTimeMinutes?.toFixed(1) || 2.4),
+      Manual: manual.avgWaitingTimeMinutes != null ? parseFloat(manual.avgWaitingTimeMinutes.toFixed(1)) : 0,
+      Automated: auto.avgWaitingTimeMinutes != null ? parseFloat(auto.avgWaitingTimeMinutes.toFixed(1)) : 0,
     },
     {
       name: 'Total Cycle Time',
-      Manual: parseFloat(manual.avgTotalCycleTimeMinutes?.toFixed(1) || 62.5),
-      Automated: parseFloat(auto.avgTotalCycleTimeMinutes?.toFixed(1) || 4.2),
+      Manual: manual.avgTotalCycleTimeMinutes != null ? parseFloat(manual.avgTotalCycleTimeMinutes.toFixed(1)) : 0,
+      Automated: auto.avgTotalCycleTimeMinutes != null ? parseFloat(auto.avgTotalCycleTimeMinutes.toFixed(1)) : 0,
     },
   ];
 
@@ -249,13 +250,13 @@ const SimulationLab = () => {
   const costChartData = [
     {
       name: 'Total Operational Cost ($)',
-      Manual: Math.round(manual.totalOperationalCost || 4560),
-      Automated: Math.round(auto.totalOperationalCost || 1120),
+      Manual: manual.totalOperationalCost != null ? Math.round(manual.totalOperationalCost) : 0,
+      Automated: auto.totalOperationalCost != null ? Math.round(auto.totalOperationalCost) : 0,
     },
     {
       name: 'Unit Cost Per Claim ($)',
-      Manual: parseFloat(manual.costPerClaim?.toFixed(2) || 22.80),
-      Automated: parseFloat(auto.costPerClaim?.toFixed(2) || 4.48),
+      Manual: manual.costPerClaim != null ? parseFloat(manual.costPerClaim.toFixed(2)) : 0,
+      Automated: auto.costPerClaim != null ? parseFloat(auto.costPerClaim.toFixed(2)) : 0,
     },
   ];
 
@@ -263,37 +264,45 @@ const SimulationLab = () => {
   const throughputChartData = [
     {
       name: 'Claims / Day',
-      Manual: Math.round(manual.throughputPerDay || 48),
-      Automated: Math.round(auto.throughputPerDay || 144),
+      Manual: manual.throughputPerDay != null ? Math.round(manual.throughputPerDay) : 0,
+      Automated: auto.throughputPerDay != null ? Math.round(auto.throughputPerDay) : 0,
     },
   ];
 
   // Chart 4: Utilization (using muted soft colors)
   const utilizationChartData = [
-    { name: 'Human Staff (Scenario A)', rate: parseFloat(manual.resourceUtilizationPercent?.toFixed(1) || 82.5), fill: COLOR_MANUAL },
-    { name: 'RPA Bot Fleet (Scenario B)', rate: parseFloat(auto.rpaUtilizationPercent?.toFixed(1) || 64.2), fill: COLOR_AUTOMATED },
-    { name: 'Human Escalation (Scenario B)', rate: parseFloat(auto.employeeUtilizationPercent?.toFixed(1) || 28.0), fill: COLOR_ESCALATION },
+    { name: 'Human Staff (Scenario A)', rate: manual.resourceUtilizationPercent != null ? parseFloat(manual.resourceUtilizationPercent.toFixed(1)) : 0, fill: COLOR_MANUAL },
+    { name: 'RPA Bot Fleet (Scenario B)', rate: auto.rpaUtilizationPercent != null ? parseFloat(auto.rpaUtilizationPercent.toFixed(1)) : 0, fill: COLOR_AUTOMATED },
+    { name: 'Human Escalation (Scenario B)', rate: auto.employeeUtilizationPercent != null ? parseFloat(auto.employeeUtilizationPercent.toFixed(1)) : 0, fill: COLOR_ESCALATION },
   ];
 
-  // ROI 36-Month Dynamic Trajectory Data
-  const manualUnitCost = manual.costPerClaim || 22.80;
-  const autoUnitCost = auto.costPerClaim || 4.48;
-  const unitSavings = Math.max(0, manualUnitCost - autoUnitCost);
-  const monthlyGrossSavings = roiMonthlyVolume * unitSavings;
-  const monthlyNetBenefit = monthlyGrossSavings - (roiAnnualMaint / 12.0);
-  const paybackMonths = monthlyNetBenefit > 0 ? (roiInitialCapital / monthlyNetBenefit) : 4.2;
-  const threeYearNetProfit = (monthlyNetBenefit * 36.0) - roiInitialCapital;
-  const threeYearRoiPct = roiInitialCapital > 0 ? (threeYearNetProfit / roiInitialCapital) * 100.0 : 320.0;
+  // ROI 36-Month Backend-Driven Trajectory
+  const [roiBackendData, setRoiBackendData] = useState(null);
 
-  const roiTrajectoryData = [];
-  for (let m = 0; m <= 36; m++) {
-    const cumulative = -roiInitialCapital + (monthlyNetBenefit * m);
-    roiTrajectoryData.push({
-      month: `M${m}`,
-      cumulativeCashFlow: Math.round(cumulative),
-      breakEven: 0,
-    });
-  }
+  useEffect(() => {
+    const manualUnitCost = simulationData?.scenarioA_manual?.costPerClaim;
+    const autoUnitCost = simulationData?.scenarioB_automated?.costPerClaim;
+    if (manualUnitCost != null && autoUnitCost != null) {
+      simulationApi.calculateRoiTrajectory({
+        initialCapital: parseFloat(roiInitialCapital) || 0,
+        annualMaintenance: parseFloat(roiAnnualMaint) || 0,
+        monthlyVolume: parseInt(roiMonthlyVolume, 10) || 0,
+        manualCostPerClaim: manualUnitCost,
+        automatedCostPerClaim: autoUnitCost,
+      }).then(res => setRoiBackendData(res.data)).catch(err => console.error('ROI calculation error:', err));
+    }
+  }, [simulationData, roiInitialCapital, roiAnnualMaint, roiMonthlyVolume]);
+
+  const paybackMonths = roiBackendData?.paybackMonths ?? null;
+  const threeYearRoiPct = roiBackendData?.threeYearRoiPct ?? null;
+  const threeYearNetProfit = roiBackendData?.threeYearNetProfit ?? 0;
+  const monthlyGrossSavings = roiBackendData?.monthlyGrossSavings ?? 0;
+
+  const roiTrajectoryData = (roiBackendData?.trajectory || []).map(pt => ({
+    month: pt.monthLabel,
+    cumulativeCashFlow: Math.round(pt.cumulativeCashFlow),
+    breakEven: 0,
+  }));
 
   return (
     <div className="space-y-6">
@@ -309,10 +318,18 @@ const SimulationLab = () => {
         </div>
 
         <div className="flex items-center space-x-3">
-          <span className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-teal-200 bg-teal-50 text-teal-800 flex items-center space-x-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-teal-700" />
-            <span>SimPy 4 Discrete-Event Engine</span>
-          </span>
+          {simulationData?.dataSource === 'analytical-approximation' ? (
+            <span className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 flex items-center space-x-1.5" title="Analytical M/G/c Allen-Cunneen queuing approximation (Python SimPy offline)">
+              <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+              <span>Analytical M/G/c Approximation</span>
+            </span>
+          ) : (
+            <span className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-teal-200 bg-teal-50 text-teal-800 flex items-center space-x-1.5" title="Python 3 SimPy discrete-event simulation engine">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <Sparkles className="w-3.5 h-3.5 text-teal-700" />
+              <span>SimPy 4 Discrete-Event Engine</span>
+            </span>
+          )}
 
           <button
             onClick={executeSimulation}
@@ -331,6 +348,17 @@ const SimulationLab = () => {
         </div>
       </div>
 
+      {/* Stability Warning when Traffic Intensity rho >= 1.0 */}
+      {simulationData?.isStable === false && (
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-start space-x-3">
+          <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="font-bold">Queue Instability Warning (ρ ≥ 1.0)</p>
+            <p className="mt-0.5">{simulationData.stabilityWarning || 'Mean arrival rate exceeds workforce service capacity. The queue will grow unbounded and latency will diverge towards infinity.'}</p>
+          </div>
+        </div>
+      )}
+
       {/* Top 4 Key Delta Metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
@@ -341,10 +369,12 @@ const SimulationLab = () => {
             </div>
           </div>
           <p className="text-3xl font-extrabold text-teal-700 mt-2">
-            ↓ {comp.cycleTimeReductionPercent?.toFixed(1) || '88.2'}%
+            {comp.cycleTimeReductionPercent != null ? `↓ ${comp.cycleTimeReductionPercent.toFixed(1)}%` : '—'}
           </p>
           <p className="text-xs text-slate-400 mt-1">
-            {manual.avgTotalCycleTimeMinutes?.toFixed(1)}m manual down to {auto.avgTotalCycleTimeMinutes?.toFixed(1)}m RPA
+            {manual.avgTotalCycleTimeMinutes != null && auto.avgTotalCycleTimeMinutes != null
+              ? `${manual.avgTotalCycleTimeMinutes.toFixed(1)}m manual down to ${auto.avgTotalCycleTimeMinutes.toFixed(1)}m RPA`
+              : 'Cycle time telemetry loading...'}
           </p>
         </div>
 
@@ -356,10 +386,12 @@ const SimulationLab = () => {
             </div>
           </div>
           <p className="text-3xl font-extrabold text-emerald-600 mt-2">
-            ↓ {comp.costReductionPercent?.toFixed(1) || '71.5'}%
+            {comp.costReductionPercent != null ? `↓ ${comp.costReductionPercent.toFixed(1)}%` : '—'}
           </p>
           <p className="text-xs text-slate-400 mt-1">
-            Unit cost: ${manual.costPerClaim?.toFixed(2)} vs ${auto.costPerClaim?.toFixed(2)}
+            {manual.costPerClaim != null && auto.costPerClaim != null
+              ? `Unit cost: $${manual.costPerClaim.toFixed(2)} vs $${auto.costPerClaim.toFixed(2)}`
+              : 'Cost telemetry loading...'}
           </p>
         </div>
 
@@ -371,10 +403,12 @@ const SimulationLab = () => {
             </div>
           </div>
           <p className="text-3xl font-extrabold text-slate-800 mt-2">
-            ↑ {comp.throughputIncreasePercent?.toFixed(1) || '145.0'}%
+            {comp.throughputIncreasePercent != null ? `↑ ${comp.throughputIncreasePercent.toFixed(1)}%` : '—'}
           </p>
           <p className="text-xs text-slate-400 mt-1">
-            {auto.throughputPerDay?.toFixed(0) || '144'} vs {manual.throughputPerDay?.toFixed(0) || '48'} claims/day
+            {auto.throughputPerDay != null && manual.throughputPerDay != null
+              ? `${auto.throughputPerDay.toFixed(0)} vs ${manual.throughputPerDay.toFixed(0)} claims/day`
+              : 'Throughput telemetry loading...'}
           </p>
         </div>
 
@@ -386,10 +420,11 @@ const SimulationLab = () => {
             </div>
           </div>
           <p className="text-3xl font-extrabold text-amber-700 mt-2">
-            {paybackMonths.toFixed(1)} <span className="text-base font-normal text-slate-500">Months</span>
+            {paybackMonths != null ? `${paybackMonths.toFixed(1)} ` : 'N/A '}
+            <span className="text-base font-normal text-slate-500">Months</span>
           </p>
           <p className="text-xs text-slate-400 mt-1">
-            3-Year ROI: <strong className="text-slate-700">{threeYearRoiPct.toFixed(1)}%</strong>
+            3-Year ROI: <strong className="text-slate-700">{threeYearRoiPct != null ? `${threeYearRoiPct.toFixed(1)}%` : 'N/A'}</strong>
           </p>
         </div>
       </div>
@@ -921,7 +956,7 @@ const SimulationLab = () => {
                 </p>
               </div>
               <span className="text-xs font-mono font-semibold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-                Break-Even Milestone: Month {paybackMonths.toFixed(1)}
+                Break-Even Milestone: {paybackMonths != null ? `Month ${paybackMonths.toFixed(1)}` : 'N/A (Net Negative)'}
               </span>
             </div>
 
@@ -1012,7 +1047,7 @@ const SimulationLab = () => {
               </div>
               <div className="p-3 rounded-xl bg-teal-50 border border-teal-200">
                 <span className="text-[10px] text-teal-700 font-semibold uppercase">3-Yr ROI Multiple</span>
-                <p className="text-lg font-bold text-teal-800 mt-1">{threeYearRoiPct.toFixed(1)}%</p>
+                <p className="text-lg font-bold text-teal-800 mt-1">{threeYearRoiPct != null ? `${threeYearRoiPct.toFixed(1)}%` : 'N/A'}</p>
               </div>
             </div>
           </div>

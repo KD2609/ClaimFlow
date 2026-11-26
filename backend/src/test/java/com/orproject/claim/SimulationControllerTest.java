@@ -60,5 +60,24 @@ public class SimulationControllerTest {
                 .andExpect(jsonPath("$.scenarioB_automated").exists())
                 .andExpect(jsonPath("$.comparison").exists());
     }
+
+    @Test
+    void testRoiTrajectoryEndpoint() throws Exception {
+        com.orproject.claim.dto.RoiTrajectoryRequestDto request = new com.orproject.claim.dto.RoiTrajectoryRequestDto();
+        request.setInitialCapital(15000.0);
+        request.setAnnualMaintenance(2500.0);
+        request.setMonthlyVolume(1000);
+        request.setManualCostPerClaim(22.80);
+        request.setAutomatedCostPerClaim(4.48);
+
+        mockMvc.perform(post("/api/simulation/roi-trajectory")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.unitSavings").value(18.32))
+                .andExpect(jsonPath("$.paybackMonths").isNumber())
+                .andExpect(jsonPath("$.trajectory").isArray())
+                .andExpect(jsonPath("$.trajectory.length()").value(37));
+    }
 }
 

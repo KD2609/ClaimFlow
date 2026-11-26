@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 import {
   ShieldCheck,
   ArrowRight,
@@ -26,11 +25,8 @@ import {
 } from 'lucide-react';
 
 const HomePage = () => {
-  const { isAuthenticated, user } = useAuth();
-  const navigate = useNavigate();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [signUpModalOpen, setSignUpModalOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState('hero');
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [activeSection, setActiveSection] = useState('hero');
 
   // Smooth scroll helper
   const scrollTo = (id) => {
@@ -136,26 +132,14 @@ const HomePage = () => {
               </button>
             </nav>
 
-            {/* Right: Auth Action Buttons */}
+            {/* Right: Action Button */}
             <div className="hidden sm:flex items-center space-x-2 lg:space-x-2.5">
               <Link
-                to="/login"
-                className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white text-xs font-semibold shadow-xs transition-all whitespace-nowrap"
+                to="/dashboard"
+                className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-teal-700 hover:bg-teal-800 text-white text-xs font-semibold shadow-xs transition-all whitespace-nowrap"
               >
                 <span>Open Dashboard</span>
                 <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-              <Link
-                to="/login"
-                className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-700 hover:text-teal-800 hover:bg-teal-50/60 border border-slate-200/90 bg-white transition-all shadow-xs whitespace-nowrap"
-              >
-                Login
-              </Link>
-              <Link
-                to="/signup"
-                className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-teal-800 bg-teal-50 border border-teal-200/80 hover:bg-teal-100 transition-all shadow-xs whitespace-nowrap"
-              >
-                Sign Up
               </Link>
             </div>
 
@@ -202,29 +186,13 @@ const HomePage = () => {
 
             <div className="pt-3 border-t border-slate-100 space-y-2">
               <Link
-                to="/login"
+                to="/dashboard"
                 onClick={() => setMobileMenuOpen(false)}
                 className="w-full flex items-center justify-center space-x-1.5 py-2 px-3 rounded-xl bg-teal-700 text-white text-xs font-semibold hover:bg-teal-800 transition-all shadow-xs"
               >
                 <span>Open Dashboard</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
-              <div className="flex items-center space-x-2">
-                <Link
-                  to="/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex-1 text-center py-2 px-3 rounded-xl border border-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-50 bg-white"
-                >
-                  Login
-                </Link>
-                <Link
-                  to="/signup"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex-1 text-center py-2 px-3 rounded-xl bg-teal-50 border border-teal-200 text-teal-800 text-xs font-semibold hover:bg-teal-100"
-                >
-                  Sign Up
-                </Link>
-              </div>
             </div>
           </div>
         )}
@@ -264,7 +232,7 @@ const HomePage = () => {
               {/* Action Buttons */}
               <div className="pt-2 flex flex-wrap items-center gap-3.5">
                 <Link
-                  to="/login"
+                  to="/dashboard"
                   className="inline-flex items-center space-x-2 px-6 py-3 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-semibold text-xs sm:text-sm shadow-sm hover:shadow transition-all group"
                 >
                   <span>Open Dashboard</span>
@@ -821,11 +789,11 @@ const HomePage = () => {
             Explore the ClaimFlow Operations Research Platform
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto leading-relaxed">
-            Sign in with an account configured for your deployment to explore the claims registry, manual adjuster workbench, RPA console, and SimPy simulation studio.
+            Launch the live platform to explore the claims registry, manual adjuster workbench, RPA console, and SimPy simulation studio.
           </p>
           <div className="pt-2 flex justify-center items-center gap-3">
             <Link
-              to="/login"
+              to="/dashboard"
               className="inline-flex items-center space-x-2 px-6 py-2.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-semibold text-xs sm:text-sm shadow-xs transition-all"
             >
               <span>Open Dashboard</span>
@@ -877,10 +845,10 @@ const HomePage = () => {
                 Features
               </button>
               <Link 
-                to="/login" 
+                to="/dashboard" 
                 className="font-semibold text-teal-700 hover:text-teal-800 transition-colors"
               >
-                Login
+                Dashboard
               </Link>
             </div>
           </div>
@@ -890,74 +858,6 @@ const HomePage = () => {
       {/* ========================================================================= */}
       {/* 9. SIGN UP DEMO NOTICE MODAL                                              */}
       {/* ========================================================================= */}
-      {signUpModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xl max-w-md w-full p-6 text-left space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center space-x-2.5">
-                <div className="w-8 h-8 rounded-lg bg-teal-50 text-teal-700 flex items-center justify-center font-bold">
-                  <Info className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-800">College Demonstration Project</h3>
-                  <p className="text-[11px] text-slate-400">Pre-Configured Demo Accounts</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setSignUpModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <p className="text-xs text-slate-600 leading-relaxed">
-              This academic application operates with pre-configured role accounts to protect simulation datasets. Public self-registration is not required. You can sign in immediately using either of the demo accounts below:
-            </p>
-
-            <div className="space-y-2.5 pt-1">
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="font-bold text-slate-800">Administrator Role</span>
-                  <span className="text-[10px] bg-teal-50 text-teal-800 border border-teal-200 px-1.5 py-0.2 rounded font-semibold">Full Access</span>
-                </div>
-                <div className="font-mono text-[11px] text-slate-600">User: <strong className="text-slate-800">admin</strong></div>
-                <p className="text-[10px] text-slate-400 mt-1">Full access to Simulation Studio, RPA Console, and Claims Management.</p>
-              </div>
-
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="font-bold text-slate-800">Claims Adjuster Role</span>
-                  <span className="text-[10px] bg-slate-100 text-slate-700 border border-slate-200 px-1.5 py-0.2 rounded font-semibold">Adjuster</span>
-                </div>
-                <div className="font-mono text-[11px] text-slate-600">User: <strong className="text-slate-800">processor</strong></div>
-                <p className="text-[10px] text-slate-400 mt-1">Access to 5-stage Manual Adjudication Workbench and Dossier.</p>
-              </div>
-            </div>
-
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-end space-x-2">
-              <button
-                type="button"
-                onClick={() => setSignUpModalOpen(false)}
-                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-              >
-                Close
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setSignUpModalOpen(false);
-                  navigate('/login');
-                }}
-                className="px-4 py-2 rounded-xl bg-teal-700 hover:bg-teal-800 text-white text-xs font-semibold shadow-xs transition-colors flex items-center space-x-1"
-              >
-                <span>Go to Sign In</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

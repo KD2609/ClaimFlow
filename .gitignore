@@ -69,3 +69,7 @@ Thumbs.db
 Desktop.ini
 *.log
 
+
+backend/target/
+frontend/dist/
+simulation-engine/__pycache__/
