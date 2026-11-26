@@ -12,7 +12,6 @@ import {
   Bot,
   Play,
   ArrowRight,
-  ShieldAlert,
   Layers,
   AlertTriangle,
   Sparkles
@@ -23,6 +22,7 @@ import {
   Cell,
   BarChart,
   Bar,
+  CartesianGrid,
   XAxis,
   YAxis,
   Tooltip,
@@ -88,8 +88,10 @@ const Dashboard = () => {
         dashboardApi.getStats(),
         claimApi.getClaims({ page: 0, size: 8 }),
       ]);
-      setStats(statsRes.data);
-      setRecentClaims(claimsRes.data.content || []);
+      const statsData = statsRes?.data && typeof statsRes.data === 'object' ? statsRes.data : null;
+      const claimsContent = Array.isArray(claimsRes?.data?.content) ? claimsRes.data.content : [];
+      setStats(statsData);
+      setRecentClaims(claimsContent);
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
       setRecentClaims([]);
@@ -301,7 +303,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {totalClaims === 0 && !loading && (
+      {totalClaims === 0 && !loading && !loadError && (
         <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-amber-900">
           <div className="flex items-center space-x-2">
             <Sparkles className="w-4 h-4 text-amber-700 flex-shrink-0" />
