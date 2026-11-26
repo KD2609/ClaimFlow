@@ -47,4 +47,10 @@ export const simulationApi = {
   calculateRoiTrajectory: (params) => api.post('/api/simulation/roi-trajectory', params),
 };
 
+// Demo Data Endpoints
+export const demoApi = {
+  seedDemoData: (params = {}) => api.post('/api/demo/seed', null, { params }),
+  getStatus: () => api.get('/api/demo/status'),
+};
+
 export default api;
