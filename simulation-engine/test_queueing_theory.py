@@ -124,3 +124,4 @@ def test_full_simulation_metadata_and_reproducibility():
     assert run1["scenarioA_manual"]["processedClaims"] == run2["scenarioA_manual"]["processedClaims"]
     assert run1["scenarioA_manual"]["avgTotalCycleTimeMinutes"] == run2["scenarioA_manual"]["avgTotalCycleTimeMinutes"]
     assert run1["scenarioB_automated"]["costPerClaim"] == run2["scenarioB_automated"]["costPerClaim"]
+

@@ -140,3 +140,4 @@ public class QueueingTheoryTest {
         assertEquals(0.0, res3.getPaybackMonths(), 0.01, "Zero capital expenditure means immediate 0-month payback");
     }
 }
+
