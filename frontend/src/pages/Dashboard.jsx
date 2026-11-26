@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { dashboardApi, claimApi, rpaApi } from '../services/api';
+import { dashboardApi, claimApi, rpaApi, demoApi } from '../services/api';
 import {
   FileText,
   Clock,
@@ -14,7 +14,8 @@ import {
   ArrowRight,
   ShieldAlert,
   Layers,
-  AlertTriangle
+  AlertTriangle,
+  Sparkles
 } from 'lucide-react';
 import {
   PieChart,
@@ -102,6 +103,8 @@ const Dashboard = () => {
     fetchData();
   }, []);
 
+  const [seedingLoading, setSeedingLoading] = useState(false);
+
   const handleQuickRpaRun = async () => {
     try {
       setRpaBatchLoading(true);
@@ -113,6 +116,21 @@ const Dashboard = () => {
       console.error('RPA Batch trigger error:', err);
     } finally {
       setRpaBatchLoading(false);
+    }
+  };
+
+  const handleSeedDemoData = async () => {
+    try {
+      setSeedingLoading(true);
+      setLoadError('');
+      const res = await demoApi.seedDemoData({ force: true });
+      setRpaSuccessMsg(res.data.message || 'Successfully seeded 250 realistic claims with queuing metrics!');
+      await fetchData();
+    } catch (err) {
+      console.error('Seed demo data error:', err);
+      setLoadError('Failed to seed demo data. Please verify the backend is running.');
+    } finally {
+      setSeedingLoading(false);
     }
   };
 
@@ -170,13 +188,18 @@ const Dashboard = () => {
         <div>
           <div className="flex items-center space-x-3">
             <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Operations Dashboard</h1>
-            {stats?.dataSource === 'live-database' ? (
+            {stats?.dataSource === 'demo-data' ? (
+              <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-teal-50 border border-teal-200 text-teal-800 text-[11px] font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-teal-600 animate-pulse"></span>
+                <span>Demo Dataset Active ({totalClaims} claims)</span>
+              </span>
+            ) : stats?.dataSource === 'live-database' ? (
               <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-semibold">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span>Live Database</span>
               </span>
             ) : (
-              <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-semibold">
+              <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-semibold">
                 <span>Demo Dataset Active</span>
               </span>
             )}
@@ -187,6 +210,16 @@ const Dashboard = () => {
         </div>
 
         <div className="flex items-center space-x-3">
+          <button
+            onClick={handleSeedDemoData}
+            disabled={seedingLoading}
+            className="inline-flex items-center space-x-2 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-sm transition-all"
+            title="Seed 250 realistic claims with Poisson arrival & OR distributions"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+            <span>{seedingLoading ? 'Seeding...' : 'Seed 250 Claims'}</span>
+          </button>
+
           <button
             onClick={handleQuickRpaRun}
             disabled={rpaBatchLoading}
@@ -205,6 +238,22 @@ const Dashboard = () => {
           </Link>
         </div>
       </div>
+
+      {totalClaims === 0 && !loading && (
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-amber-900">
+          <div className="flex items-center space-x-2">
+            <Sparkles className="w-4 h-4 text-amber-700 flex-shrink-0" />
+            <span>The database is currently empty. Click <strong>Seed 250 Claims</strong> to populate realistic health, vehicle, and life insurance claims with queuing metrics.</span>
+          </div>
+          <button
+            onClick={handleSeedDemoData}
+            disabled={seedingLoading}
+            className="px-3 py-1.5 rounded-lg bg-teal-700 hover:bg-teal-800 text-white font-semibold transition-colors flex-shrink-0"
+          >
+            {seedingLoading ? 'Seeding...' : 'Populate 250 Claims'}
+          </button>
+        </div>
+      )}
 
       {loadError && <div role="alert" className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs">{loadError}</div>}
 

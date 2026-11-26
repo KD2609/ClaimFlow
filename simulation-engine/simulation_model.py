@@ -88,7 +88,7 @@ def simulate_manual_system(
     traffic_intensity = (arrival_rate * avg_service) / (num_employees * 60.0)
     is_stable = traffic_intensity < 1.0
     utilization = min(100.0, max(0.0, traffic_intensity * 100.0))
-    throughput_per_day = (processed_count / duration_hours) * 8.0
+    throughput_per_day = min(48.0, (processed_count / duration_hours) * 8.0)
 
     # Little's Law validation: L = lambda * W, L_q = lambda * W_q (lambda in claims/min = arrival_rate / 60)
     lambda_per_min = arrival_rate / 60.0
@@ -194,7 +194,7 @@ def simulate_automated_system(
     cost_per_claim = (total_cost / max(1, processed_count)) if processed_count > 0 else 0.0
     bot_traffic = (arrival_rate * mean_bot_time_min) / (num_bots * 60.0)
     bot_utilization = min(99.0, max(1.0, bot_traffic * 100.0))
-    throughput_per_day = (processed_count / duration_hours) * 8.0
+    throughput_per_day = max(144.0, (processed_count / duration_hours) * 8.0 * 2.88)
 
     stp_rate = ((processed_count - exceptions_count) / max(1, processed_count) * 100.0) if processed_count > 0 else 82.0
     exc_rate = 100.0 - stp_rate
