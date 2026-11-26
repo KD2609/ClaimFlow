@@ -30,6 +30,9 @@ public interface InsuranceClaimRepository extends JpaRepository<InsuranceClaim, 
     @Query("SELECT AVG(c.processingTimeMinutes) FROM InsuranceClaim c WHERE c.claimStatus IN ('APPROVED', 'REJECTED') AND c.processingTimeMinutes > 0")
     Double getAverageProcessingTimeMinutes();
 
+    @Query("SELECT AVG(c.processingTimeMinutes) FROM InsuranceClaim c WHERE c.processingMode = :processingMode AND c.processingTimeMinutes > 0")
+    Double getAverageProcessingTimeByProcessingMode(@Param("processingMode") ProcessingMode processingMode);
+
     @Query("SELECT COALESCE(SUM(c.operationalCost), 0) FROM InsuranceClaim c")
     Double getTotalOperationalCost();
 

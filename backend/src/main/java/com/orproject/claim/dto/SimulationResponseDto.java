@@ -1,5 +1,7 @@
 package com.orproject.claim.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Map;
 
 public class SimulationResponseDto {
@@ -7,7 +9,13 @@ public class SimulationResponseDto {
     private Long configId;
     private String name;
     private String status = "COMPLETED";
+
+    @JsonProperty("scenarioA_manual")
+    @JsonAlias({"scenarioAManual", "scenarioA_manual"})
     private Map<String, Object> scenarioAManual;
+
+    @JsonProperty("scenarioB_automated")
+    @JsonAlias({"scenarioBAutomated", "scenarioB_automated"})
     private Map<String, Object> scenarioBAutomated;
     private Map<String, Object> comparison;
     private Map<String, Object> roi;

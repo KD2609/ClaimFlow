@@ -427,7 +427,7 @@ public class SimulationService {
         }
 
         RoiTrajectoryResponseDto response = new RoiTrajectoryResponseDto();
-        response.setUnitSavings(round(unitSavings));
+        response.setUnitSavings(round(unitSavings, 2));
         response.setMonthlyGrossSavings(round(monthlyGrossSavings));
         response.setMonthlyNetBenefit(round(monthlyNetBenefit));
         response.setPaybackMonths(paybackMonths);
