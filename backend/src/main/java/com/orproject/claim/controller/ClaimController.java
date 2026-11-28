@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -28,13 +29,14 @@ public class ClaimController {
     @GetMapping
     public ResponseEntity<Page<InsuranceClaim>> getClaims(
             @RequestParam(required = false) ClaimStatus status,
+            @RequestParam(required = false) List<ClaimStatus> statuses,
             @RequestParam(required = false) InsuranceType type,
             @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "submissionDate"));
-        Page<InsuranceClaim> claims = claimService.getClaims(status, type, search, pageable);
+        Page<InsuranceClaim> claims = claimService.getClaims(status, statuses, type, search, pageable);
         return ResponseEntity.ok(claims);
     }
 

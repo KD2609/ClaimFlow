@@ -5,7 +5,15 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "insurance_claims")
+@Table(
+    name = "insurance_claims",
+    indexes = {
+        @Index(name = "idx_claim_submission_date", columnList = "submissionDate"),
+        @Index(name = "idx_claim_status", columnList = "claimStatus"),
+        @Index(name = "idx_claim_insurance_type", columnList = "insuranceType"),
+        @Index(name = "idx_claim_processing_mode", columnList = "processingMode")
+    }
+)
 public class InsuranceClaim {
 
     @Id

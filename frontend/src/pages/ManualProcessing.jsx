@@ -54,67 +54,141 @@ const ManualProcessing = () => {
   const [approvedAmount, setApprovedAmount] = useState('');
 
   const timerRef = useRef(null);
+  const pendingClaimsRef = useRef([]);
+
+  const deriveStageHistory = (claimRecord) => {
+    if (!claimRecord || !(claimRecord.processingTimeMinutes > 0)) {
+      return [];
+    }
+    return [{
+      processingStage: claimRecord.currentStage || 'DOCUMENT_VERIFICATION',
+      durationMinutes: claimRecord.processingTimeMinutes,
+      laborCost: claimRecord.operationalCost || 0,
+      notes: claimRecord.adjudicationNotes || 'Manual verification active',
+      performerType: 'HUMAN_ADJUSTER',
+      timestamp: claimRecord.submissionDate || '',
+    }];
+  };
+
+  useEffect(() => {
+    pendingClaimsRef.current = pendingClaimsList;
+  }, [pendingClaimsList]);
+
+  useEffect(() => {
+    if (claimIdParam) {
+      setSelectedClaimId(claimIdParam);
+    }
+  }, [claimIdParam]);
 
   // Load claims eligible for manual processing
   useEffect(() => {
+    let cancelled = false;
     const loadEligibleClaims = async () => {
       try {
         setLoadingClaims(true);
         setClaimsLoadError('');
-        const res = await claimApi.getClaims({ size: 100 });
-        const eligible = (res.data.content || []).filter(
+        const res = await claimApi.getClaims({
+          statuses: 'SUBMITTED,IN_REVIEW,REQUIRES_MANUAL_REVIEW',
+          size: 100,
+        });
+        if (cancelled) return;
+        const eligible = (res.data?.content || []).filter(
           (c) => c.claimStatus === 'SUBMITTED' || c.claimStatus === 'IN_REVIEW' || c.claimStatus === 'REQUIRES_MANUAL_REVIEW'
         );
+        pendingClaimsRef.current = eligible;
         setPendingClaimsList(eligible);
-        if (!selectedClaimId && eligible.length > 0) {
-          setSelectedClaimId(eligible[0].id.toString());
+        if (!claimIdParam && eligible.length > 0) {
+          setSelectedClaimId((prev) => prev || eligible[0].id.toString());
         }
       } catch (e) {
+        if (cancelled) return;
         console.error('Error fetching eligible claims:', e);
         setPendingClaimsList([]);
-        setClaimsLoadError(e.response?.data?.message || 'Could not load eligible claims. Check the API connection and try again.');
+        const message = e.code === 'ECONNABORTED'
+          ? 'Timed out loading eligible claims. Please check the API connection and retry.'
+          : (e.response?.data?.message || 'Could not load eligible claims. Check the API connection and try again.');
+        setClaimsLoadError(message);
       } finally {
-        setLoadingClaims(false);
+        if (!cancelled) {
+          setLoadingClaims(false);
+        }
       }
     };
     loadEligibleClaims();
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [claimIdParam]);
 
   // Load selected claim data
   useEffect(() => {
     if (!selectedClaimId) {
       setClaim(null);
+      setClaimHistory([]);
       setLoadingClaim(false);
       return;
     }
 
+    let cancelled = false;
+    const cachedMatch = pendingClaimsRef.current.find((c) => String(c.id) === String(selectedClaimId));
+
+    if (cachedMatch) {
+      const initialHistory = deriveStageHistory(cachedMatch);
+      setClaim(cachedMatch);
+      setApprovedAmount(cachedMatch.eligiblePayoutAmount || cachedMatch.claimAmount);
+      setClaimHistory(initialHistory);
+      setActiveStageIndex(Math.min(initialHistory.length, 4));
+      setTimerSeconds(0);
+      setIsTimerRunning(true);
+      setClaimLoadError('');
+      setLoadingClaim(false);
+    }
+
     const loadClaimDetails = async () => {
       try {
-        setLoadingClaim(true);
+        if (!cachedMatch) {
+          setLoadingClaim(true);
+        }
         setClaimLoadError('');
-        const res = await claimApi.getClaimById(selectedClaimId);
-        setClaim(res.data);
-        setApprovedAmount(res.data.eligiblePayoutAmount || res.data.claimAmount);
+        const [claimRes, historyRes] = await Promise.all([
+          claimApi.getClaimById(selectedClaimId),
+          manualProcessingApi.getHistory(selectedClaimId),
+        ]);
+        if (cancelled) return;
 
-        // Load processing history
-        const hRes = await manualProcessingApi.getHistory(selectedClaimId);
-        setClaimHistory(hRes.data || []);
+        const loadedClaim = claimRes.data;
+        const loadedHistory = historyRes.data || [];
+        setClaim(loadedClaim);
+        setApprovedAmount(loadedClaim.eligiblePayoutAmount || loadedClaim.claimAmount);
+        setClaimHistory(loadedHistory);
 
         // Infer current stage
-        const histCount = hRes.data?.length || 0;
-        setActiveStageIndex(Math.min(histCount, 4));
-        setTimerSeconds(0);
-        setIsTimerRunning(true);
+        setActiveStageIndex(Math.min(loadedHistory.length, 4));
+        if (!cachedMatch) {
+          setTimerSeconds(0);
+          setIsTimerRunning(true);
+        }
       } catch (e) {
+        if (cancelled) return;
         console.error('Error loading claim:', e);
-        setClaim(null);
-        setClaimLoadError(e.response?.data?.message || 'Could not load the selected claim. Please select it again or retry.');
+        if (!cachedMatch) {
+          setClaim(null);
+          const message = e.code === 'ECONNABORTED'
+            ? 'Timed out loading the selected claim. Please select it again or retry.'
+            : (e.response?.data?.message || 'Could not load the selected claim. Please select it again or retry.');
+          setClaimLoadError(message);
+        }
       } finally {
-        setLoadingClaim(false);
+        if (!cancelled) {
+          setLoadingClaim(false);
+        }
       }
     };
 
     loadClaimDetails();
+    return () => {
+      cancelled = true;
+    };
   }, [selectedClaimId]);
 
   // Timer ticker
@@ -138,7 +212,7 @@ const ManualProcessing = () => {
     setFeedbackMsg('');
     try {
       const stageKey = STAGES[activeStageIndex].key;
-      await manualProcessingApi.progressStage({
+      const progressRes = await manualProcessingApi.progressStage({
         claimId: claim.id,
         stage: stageKey,
         durationMinutes: timerSeconds / 60.0,
@@ -156,11 +230,12 @@ const ManualProcessing = () => {
         setActiveStageIndex((prev) => prev + 1);
       }
 
-      // Refresh claim history
-      const hRes = await manualProcessingApi.getHistory(claim.id);
-      setClaimHistory(hRes.data || []);
-      const cRes = await claimApi.getClaimById(claim.id);
-      setClaim(cRes.data);
+      // Use updated claim returned by progressStage and refresh history
+      const updatedClaim = progressRes.data;
+      setClaim(updatedClaim);
+      setPendingClaimsList((prev) => prev.map((c) => (c.id === updatedClaim.id ? updatedClaim : c)));
+      const hRes = await manualProcessingApi.getHistory(claim.id, { cache: false });
+      setClaimHistory(hRes.data || deriveStageHistory(updatedClaim));
     } catch (err) {
       setFeedbackMsg(`Error: ${err.response?.data?.message || 'Failed to progress stage'}`);
     } finally {
@@ -173,7 +248,7 @@ const ManualProcessing = () => {
     setSubmitting(true);
     setFeedbackMsg('');
     try {
-      await manualProcessingApi.submitDecision({
+      const decisionRes = await manualProcessingApi.submitDecision({
         claimId: claim.id,
         decision: decisionStatus,
         eligiblePayoutAmount: decisionStatus === 'APPROVED' ? parseFloat(approvedAmount) : 0,
@@ -181,11 +256,11 @@ const ManualProcessing = () => {
       });
 
       setFeedbackMsg(`Claim #${claim.claimNumber} successfully adjudicated: ${decisionStatus}!`);
-      // Reload claim
-      const cRes = await claimApi.getClaimById(claim.id);
-      setClaim(cRes.data);
-      const hRes = await manualProcessingApi.getHistory(claim.id);
-      setClaimHistory(hRes.data || []);
+      const updatedClaim = decisionRes.data;
+      setClaim(updatedClaim);
+      setPendingClaimsList((prev) => prev.map((c) => (c.id === updatedClaim.id ? updatedClaim : c)));
+      const hRes = await manualProcessingApi.getHistory(claim.id, { cache: false });
+      setClaimHistory(hRes.data || deriveStageHistory(updatedClaim));
       setIsTimerRunning(false);
     } catch (err) {
       setFeedbackMsg(`Error: ${err.response?.data?.message || 'Decision failed'}`);

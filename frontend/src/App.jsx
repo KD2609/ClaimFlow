@@ -2,12 +2,33 @@ import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 
-const HomePage = lazy(() => import('./pages/HomePage'));
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const ClaimsManagement = lazy(() => import('./pages/ClaimsManagement'));
-const ManualProcessing = lazy(() => import('./pages/ManualProcessing'));
-const AutomatedProcessing = lazy(() => import('./pages/AutomatedProcessing'));
-const SimulationLab = lazy(() => import('./pages/SimulationLab'));
+const loadHomePage = () => import('./pages/HomePage');
+const loadDashboard = () => import('./pages/Dashboard');
+const loadClaimsManagement = () => import('./pages/ClaimsManagement');
+const loadManualProcessing = () => import('./pages/ManualProcessing');
+const loadAutomatedProcessing = () => import('./pages/AutomatedProcessing');
+const loadSimulationLab = () => import('./pages/SimulationLab');
+
+export const routePreloaders = {
+  '/dashboard': loadDashboard,
+  '/claims': loadClaimsManagement,
+  '/manual-processing': loadManualProcessing,
+  '/automated-processing': loadAutomatedProcessing,
+};
+
+export const preloadCoreNavbarRoutes = () => {
+  loadDashboard();
+  loadClaimsManagement();
+  loadManualProcessing();
+  loadAutomatedProcessing();
+};
+
+const HomePage = lazy(loadHomePage);
+const Dashboard = lazy(loadDashboard);
+const ClaimsManagement = lazy(loadClaimsManagement);
+const ManualProcessing = lazy(loadManualProcessing);
+const AutomatedProcessing = lazy(loadAutomatedProcessing);
+const SimulationLab = lazy(loadSimulationLab);
 
 function App() {
   return (

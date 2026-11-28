@@ -4,7 +4,12 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "rpa_execution_logs")
+@Table(
+    name = "rpa_execution_logs",
+    indexes = {
+        @Index(name = "idx_rpa_log_timestamp", columnList = "timestamp")
+    }
+)
 public class RPAExecutionLog {
 
     @Id

@@ -95,7 +95,10 @@ const Dashboard = () => {
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
       setRecentClaims([]);
-      setLoadError(err.response?.data?.message || 'Could not load dashboard data. Check the API connection and try again.');
+      const message = err.code === 'ECONNABORTED'
+        ? 'Dashboard request timed out while connecting to the API. Please try again.'
+        : (err.response?.data?.message || 'Could not load dashboard data. Check the API connection and try again.');
+      setLoadError(message);
     } finally {
       setLoading(false);
     }

@@ -83,6 +83,7 @@ public class ManualProcessingService {
         return claimService.save(claim);
     }
 
+    @Transactional(readOnly = true)
     public List<Map<String, Object>> getStageHistory(Long claimId) {
         InsuranceClaim claim = claimService.getClaimById(claimId);
         List<Map<String, Object>> history = new ArrayList<>();

@@ -27,10 +27,20 @@ public class ClaimService {
         this.claimRepository = claimRepository;
     }
 
+    @Transactional(readOnly = true)
     public Page<InsuranceClaim> getClaims(ClaimStatus status, InsuranceType type, String search, Pageable pageable) {
+        return getClaims(status, null, type, search, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<InsuranceClaim> getClaims(ClaimStatus status, java.util.List<ClaimStatus> statuses, InsuranceType type, String search, Pageable pageable) {
         Specification<InsuranceClaim> specification = (root, query, criteriaBuilder) -> {
             java.util.List<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
-            if (status != null) predicates.add(criteriaBuilder.equal(root.get("claimStatus"), status));
+            if (statuses != null && !statuses.isEmpty()) {
+                predicates.add(root.get("claimStatus").in(statuses));
+            } else if (status != null) {
+                predicates.add(criteriaBuilder.equal(root.get("claimStatus"), status));
+            }
             if (type != null) predicates.add(criteriaBuilder.equal(root.get("insuranceType"), type));
             if (search != null && !search.isBlank()) {
                 String pattern = "%" + search.trim().toLowerCase(java.util.Locale.ROOT) + "%";
@@ -44,6 +54,7 @@ public class ClaimService {
         return claimRepository.findAll(specification, pageable);
     }
 
+    @Transactional(readOnly = true)
     public InsuranceClaim getClaimById(Long id) {
         return claimRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Insurance Claim not found with ID: " + id));

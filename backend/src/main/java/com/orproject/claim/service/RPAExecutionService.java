@@ -150,10 +150,12 @@ public class RPAExecutionService {
         );
     }
 
+    @Transactional(readOnly = true)
     public Page<RPAExecutionLog> getExecutionLogs(Pageable pageable) {
         return logRepository.findAllByOrderByTimestampDesc(pageable);
     }
 
+    @Transactional(readOnly = true)
     public List<RPAExecutionLog> getRecentLogs() {
         return logRepository.findTop10ByOrderByTimestampDesc();
     }

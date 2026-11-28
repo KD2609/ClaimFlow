@@ -1,11 +1,9 @@
 package com.orproject.claim.service;
 
 import com.orproject.claim.dto.DashboardStatsDto;
-import com.orproject.claim.model.ClaimStatus;
-import com.orproject.claim.model.ProcessingMode;
-import com.orproject.claim.model.InsuranceType;
 import com.orproject.claim.repository.InsuranceClaimRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class DashboardService {
@@ -18,34 +16,37 @@ public class DashboardService {
         this.dataSeederService = dataSeederService;
     }
 
+    @Transactional(readOnly = true)
     public DashboardStatsDto getDashboardStats() {
-        long total = claimRepository.count();
-        long pending = claimRepository.countByClaimStatus(ClaimStatus.SUBMITTED);
-        long inReview = claimRepository.countByClaimStatus(ClaimStatus.IN_REVIEW);
-        long approved = claimRepository.countByClaimStatus(ClaimStatus.APPROVED);
-        long rejected = claimRepository.countByClaimStatus(ClaimStatus.REJECTED);
-        long manualReview = claimRepository.countByClaimStatus(ClaimStatus.REQUIRES_MANUAL_REVIEW);
+        InsuranceClaimRepository.DashboardAggregateProjection agg =
+                claimRepository.getDashboardAggregates(DataSeederService.DEMO_CLAIM_PREFIX + "0001");
 
-        Double avgTime = claimRepository.getAverageProcessingTimeMinutes();
-        Double totalCost = claimRepository.getTotalOperationalCost();
+        long total = agg.getTotalClaims() != null ? agg.getTotalClaims() : 0L;
+        long pending = agg.getPendingClaims() != null ? agg.getPendingClaims() : 0L;
+        long inReview = agg.getInProgressClaims() != null ? agg.getInProgressClaims() : 0L;
+        long approved = agg.getApprovedClaims() != null ? agg.getApprovedClaims() : 0L;
+        long rejected = agg.getRejectedClaims() != null ? agg.getRejectedClaims() : 0L;
+
+        Double avgTime = agg.getAverageProcessingTimeMinutes();
+        Double totalCost = agg.getTotalOperationalCost();
 
         DashboardStatsDto dto = new DashboardStatsDto();
         dto.setTotalClaims((int) total);
-        dto.setPendingClaims((int) (pending + manualReview));
+        dto.setPendingClaims((int) pending);
         dto.setInProgressClaims((int) inReview);
         dto.setApprovedClaims((int) approved);
         dto.setRejectedClaims((int) rejected);
-        dto.setHealthClaims((int) claimRepository.countByInsuranceType(InsuranceType.HEALTH));
-        dto.setVehicleClaims((int) claimRepository.countByInsuranceType(InsuranceType.VEHICLE));
-        dto.setLifeClaims((int) claimRepository.countByInsuranceType(InsuranceType.LIFE));
+        dto.setHealthClaims(agg.getHealthClaims() != null ? agg.getHealthClaims().intValue() : 0);
+        dto.setVehicleClaims(agg.getVehicleClaims() != null ? agg.getVehicleClaims().intValue() : 0);
+        dto.setLifeClaims(agg.getLifeClaims() != null ? agg.getLifeClaims().intValue() : 0);
         dto.setAverageProcessingTimeMinutes(avgTime != null ? avgTime : 0.0);
         dto.setTotalOperationalCost(totalCost != null ? totalCost : 0.0);
 
         // Breakdowns for Dashboard charts
-        long manualCount = claimRepository.countByProcessingMode(ProcessingMode.MANUAL);
-        long autoCount = claimRepository.countByProcessingMode(ProcessingMode.AUTOMATED);
-        Double manualCost = claimRepository.getOperationalCostByProcessingMode(ProcessingMode.MANUAL);
-        Double autoCost = claimRepository.getOperationalCostByProcessingMode(ProcessingMode.AUTOMATED);
+        long manualCount = agg.getManualProcessedCount() != null ? agg.getManualProcessedCount() : 0L;
+        long autoCount = agg.getAutomatedProcessedCount() != null ? agg.getAutomatedProcessedCount() : 0L;
+        Double manualCost = agg.getManualOperationalCost();
+        Double autoCost = agg.getAutomatedOperationalCost();
 
         dto.setManualProcessedCount((int) manualCount);
         dto.setAutomatedProcessedCount((int) autoCount);
@@ -53,8 +54,8 @@ public class DashboardService {
         dto.setAutomatedOperationalCost(autoCost != null ? autoCost : (autoCount * 3.67));
 
         // Derived Operations Research Metrics from Database Records
-        Double avgManualService = claimRepository.getAverageProcessingTimeByProcessingMode(ProcessingMode.MANUAL);
-        Double avgAutoService = claimRepository.getAverageProcessingTimeByProcessingMode(ProcessingMode.AUTOMATED);
+        Double avgManualService = agg.getManualServiceTimeMinutes();
+        Double avgAutoService = agg.getAutomatedServiceTimeMinutes();
 
         double manualServiceTime = (avgManualService != null && avgManualService > 0) ? round(avgManualService, 1) : 24.0;
         double autoServiceTime = (avgAutoService != null && avgAutoService > 0) ? round(avgAutoService, 1) : 1.2;
@@ -95,7 +96,9 @@ public class DashboardService {
         dto.setCostReductionPercent(costRed);
         dto.setThroughputIncreasePercent(tputInc);
 
-        dto.setDataSource(dataSeederService.isDemoDataActive() ? "demo-data" : "live-database");
+        boolean demoActive = dataSeederService.isDemoDataFlagged()
+                || (agg.getDemoClaimMatches() != null && agg.getDemoClaimMatches() > 0);
+        dto.setDataSource(demoActive ? "demo-data" : "live-database");
 
         return dto;
     }

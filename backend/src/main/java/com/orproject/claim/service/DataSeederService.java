@@ -46,8 +46,12 @@ public class DataSeederService implements CommandLineRunner {
         this.environment = environment;
     }
 
+    public boolean isDemoDataFlagged() {
+        return demoDataActive;
+    }
+
     public boolean isDemoDataActive() {
-        return demoDataActive || claimRepository.findByClaimNumber(DEMO_CLAIM_PREFIX + "0001").isPresent();
+        return demoDataActive || claimRepository.existsByClaimNumber(DEMO_CLAIM_PREFIX + "0001");
     }
 
     @Override

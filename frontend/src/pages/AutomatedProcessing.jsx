@@ -28,9 +28,9 @@ const AutomatedProcessing = () => {
   // Auto-scroll ref for terminal console
   const logsEndRef = useRef(null);
 
-  const loadRecentLogs = async () => {
+  const loadRecentLogs = async (forceRefresh = false) => {
     try {
-      const res = await rpaApi.getRecentLogs();
+      const res = await rpaApi.getRecentLogs(forceRefresh ? { cache: false } : {});
       setRecentLogs(res.data || []);
     } catch (e) {
       console.error('Error fetching logs:', e);
@@ -421,7 +421,7 @@ const AutomatedProcessing = () => {
               </div>
 
               <button
-                onClick={loadRecentLogs}
+                onClick={() => loadRecentLogs(true)}
                 className="inline-flex items-center space-x-1 text-slate-500 hover:text-slate-800 text-xs px-2.5 py-1 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
                 title="Refresh audit records"
               >

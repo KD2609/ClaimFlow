@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Link } from 'react-router-dom';
+import { preloadCoreNavbarRoutes, routePreloaders } from '../../App';
 import { 
   ShieldCheck, 
   Activity, 
@@ -22,6 +23,15 @@ const navItems = [
 
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    preloadCoreNavbarRoutes();
+  }, []);
+
+  const handlePrefetchRoute = (path) => {
+    const preload = routePreloaders[path];
+    if (preload) preload();
+  };
 
   return (
     <header className="bg-white border-b border-slate-200/80 sticky top-0 z-30 shadow-xs">
@@ -52,6 +62,8 @@ const Navbar = () => {
                   key={item.path}
                   to={item.path}
                   end={item.path === '/'}
+                  onMouseEnter={() => handlePrefetchRoute(item.path)}
+                  onFocus={() => handlePrefetchRoute(item.path)}
                   className={({ isActive }) =>
                     `flex items-center space-x-1.5 xl:space-x-2 px-2.5 xl:px-3.5 py-2 rounded-xl text-xs font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                       isActive
